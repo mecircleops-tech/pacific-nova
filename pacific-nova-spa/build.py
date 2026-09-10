@@ -9,7 +9,7 @@ Both are inlined as base64 data URIs so the output is ONE html file that works
 from a double-click, a USB stick, or any static host — no sidecar assets needed.
 
     python3 build.py                     # assets/hero-bg.jpg + assets/pacific-nova-logo.png
-    python3 build.py --bg assets/hero-bg.png   # lossless artwork, ~4.5 MB output
+    python3 build.py --bg assets/hero-bg.png   # lossless artwork, ~3.1 MB output
 """
 import argparse, base64, pathlib, mimetypes, sys
 

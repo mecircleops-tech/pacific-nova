@@ -71,15 +71,15 @@
   PASS   480×900  tanpa overflow · burger ON  · nav desktop OFF
   PASS   759×900  tanpa overflow · burger ON  · nav desktop OFF
   PASS   760×900  tanpa overflow · burger ON  · nav desktop OFF
-  PASS   761×900  tanpa overflow · burger OFF · nav desktop ON 
-  PASS   900×700  tanpa overflow · burger OFF · nav desktop ON 
-  PASS   939×900  tanpa overflow · burger OFF · nav desktop ON 
-  PASS   940×900  tanpa overflow · burger OFF · nav desktop ON 
-  PASS   941×900  tanpa overflow · burger OFF · nav desktop ON 
-  PASS  1280×800  tanpa overflow · burger OFF · nav desktop ON 
-  PASS  1440×900  tanpa overflow · burger OFF · nav desktop ON 
-  PASS  1920×1080 tanpa overflow · burger OFF · nav desktop ON 
-  PASS  2560×1300 tanpa overflow · burger OFF · nav desktop ON 
+  PASS   761×900  tanpa overflow · burger OFF · nav desktop ON
+  PASS   900×700  tanpa overflow · burger OFF · nav desktop ON
+  PASS   939×900  tanpa overflow · burger OFF · nav desktop ON
+  PASS   940×900  tanpa overflow · burger OFF · nav desktop ON
+  PASS   941×900  tanpa overflow · burger OFF · nav desktop ON
+  PASS  1280×800  tanpa overflow · burger OFF · nav desktop ON
+  PASS  1440×900  tanpa overflow · burger OFF · nav desktop ON
+  PASS  1920×1080 tanpa overflow · burger OFF · nav desktop ON
+  PASS  2560×1300 tanpa overflow · burger OFF · nav desktop ON
   PASS   360×740  #/about     render penuh, tanpa overflow horizontal
   PASS   360×740  #/faq       render penuh, tanpa overflow horizontal
   PASS   360×740  #/passport  render penuh, tanpa overflow horizontal

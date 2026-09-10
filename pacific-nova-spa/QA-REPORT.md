@@ -137,7 +137,7 @@ berpindah tab (S7.4).
 | **S9** | ketahanan data: localStorage korup (sesi tidak ikut hilang, DB di-seed ulang), entry yatim tanpa crash, HTML di data di-escape, leaderboard tetap urut dengan data aneh, 0 error konsol, 0 teks cacat | 11 | 11 LULUS |
 | **S10** | `file://` murni (berkas unduhan): login, data terbaca, tabel 9 orang, kontrak Joshua, report terisi, 0 request keluar, 0 error | 7 | 7 LULUS |
 
-Log mentah: **`QA-DASH-RUN.txt`**.
+Log mentah: **`QA-DASH-RUN.txt`** (regenerasi dengan `python3 qa_dash.py --verbose` agar memuat jejak per-asesi).
 
 ## I. Cara menjalankan ulang (kedua berkas)
 
@@ -145,6 +145,7 @@ Log mentah: **`QA-DASH-RUN.txt`**.
 python3 build.py && python3 build.py --src src/dashboard.src.html --out dashboard.html
 python3 qa_audit.py && python3 qa_spec.py && python3 qa_dash.py
 python3 qa_map.py                 # regenerasi CODEMAP.md setelah memindah blok
+python3 qa_dash.py --verbose > QA-DASH-RUN.txt   # simpan jejak per-asesi dashboard
 ```
 
 Semua `exit code 1` kalau ada temuan → siap jadi gerbang sebelum file dikirim.

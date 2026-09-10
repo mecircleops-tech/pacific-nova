@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Artefak sementara QA (jangan ikut ter-commit)
+*.stripped
+*.log
+.playwright/
+.pytest_cache/
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+*~
+.vscode/
+.idea/

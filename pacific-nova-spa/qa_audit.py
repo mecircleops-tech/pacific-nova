@@ -58,6 +58,11 @@ def audit(path: pathlib.Path, label: str, built: bool):
     if (dead := sorted(defined - broad)):
         bad('A1', 'CSS tidak terpakai: ' + ', '.join('.' + d for d in dead))
     state_prefix = ('view-', 'is-', 'no-', 'desk')
+    # CATATAN (QA-STRUCTURE P2-2): kelas yang dirakit runtime dari variabel JS
+    # satu huruf (mis. class="' + c + '…") ikut terdeteksi sebagai yatim — itu
+    # false positive, bukan CSS yang hilang. Konvensi: hindari variabel satu
+    # huruf di dalam string class; bila nama kelas memang dinamis, daftarkan
+    # prefix-nya di state_prefix agar A2 tidak berisik.
     orphans = sorted(x for x in used - defined if not x.startswith(state_prefix)
                      and re.fullmatch(r'[a-z][a-z0-9_-]*', x))
     if orphans:

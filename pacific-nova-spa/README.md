@@ -21,6 +21,22 @@ dashboard.html    ← dashboard admin
 `src/index.src.html` dan `src/dashboard.src.html` **bukan** untuk user — itu template yang
 masih berisi token placeholder, jadi kalau dibuka akan tampak rusak (logo pecah, hero putih).
 
+## Berkas pendukung (tidak untuk user)
+
+| Path | Isi |
+|---|---|
+| `src/*.src.html` | template sumber — satu-satunya yang boleh diedit manual |
+| `assets/hero-bg.jpg` + `assets/pacific-nova-logo.png` | gambar yang di-inline setiap build (default) |
+| `assets/hero-bg.png` | alternatif hero lossless untuk `--bg` (output ±3,1 MB) |
+| `assets/qa-attach.png` | fixture upload 8×8 untuk `qa_dash.py` |
+| `shots/*.png` | bukti visual QA: 8 tangkapan layar dashboard (±7 MB) — arsip, bukan bagian produk |
+| `QA-*.md` / `QA-*.txt`, `CODEMAP.md` | laporan QA, log mentah, dan peta kode |
+
+Pemetaan `shots/` → rute: `dash-login` (layar masuk) · `dash-overview` (`#/overview`) ·
+`dash-influencers` (`#/influencers`) · `dash-report` (`#/report`) ·
+`dash-leaderboard` (`#/leaderboard`) · `dash-review` (`#/create`, layar re-verification) ·
+`dash-content` (`#/content`) · `dash-mobile` (drawer ≤960px).
+
 ## Rantai kerja
 
 ```
@@ -37,7 +53,7 @@ src/dashboard.src.html   ──[ python3 build.py --src src/dashboard.src.html -
 |---|---|
 | `python3 build.py` | setelah mengedit `src/index.src.html` |
 | `python3 build.py --src src/dashboard.src.html --out dashboard.html` | setelah mengedit `src/dashboard.src.html` |
-| `python3 build.py --bg assets/hero-bg.png` | hero lossless, output ±4,5 MB |
+| `python3 build.py --bg assets/hero-bg.png` | hero lossless, output ±3,1 MB |
 | `python3 qa_audit.py` | cek cepat tanpa browser; `exit 1` kalau ada temuan |
 | `python3 qa_spec.py` / `python3 qa_dash.py` | suite Chromium (`pip install playwright && playwright install chromium`) |
 | `python3 qa_map.py` | setelah menambah/memindah blok anotasi |
