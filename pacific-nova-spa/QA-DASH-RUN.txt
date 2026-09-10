@@ -1,0 +1,19 @@
+
+══ QA dashboard admin · http://localhost:8001/dashboard.html
+Per blok:
+  S0    11  boot & file mandiri
+  S1    10  login, guard, sesi
+  S2    14  overview
+  S3    24  data influencer
+  S4    18  NAS report
+  S5    36  create NAS + re-verification
+  S6    10  leaderboard
+  S7    32  manage content
+  S8    27  responsif & a11y
+  S9    11  ketahanan data
+  S10    7  dibuka dari file://
+
+HASIL QA DASHBOARD: 200/200 LULUS
+Lolos semua: login & guard, CRUD influencer, ledger + verifikasi, create NAS dua
+langkah (review dulu, "Lanjutkan prosesnya" kemudian), leaderboard, manage content
+(FAQ · About · Contact · benefit per tier), persistensi, responsif, a11y, file mandiri.

@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pacific Nova — Collect Moments, Earn Nova</title>
+<meta name="description" content="Pacific Nova membership — NAS points, tiers and benefits in one passport." />
+<meta name="theme-color" content="#e6f0f6" />
+<!--
+  ==========================================================================
+  [MK-00] ★KRITIS · PETA KODE — baca ini sebelum mengedit apa pun
+  ==========================================================================
+  File INI adalah TEMPLATE (src/index.src.html). Yang boleh dibagikan /
+  di-download user adalah hasil build:  index.html  (1 file, standalone).
+  Edit index.html manual = hilang tertimpa build berikutnya.
+
+  RANTAI BUILD
+    src/index.src.html  [jalankan: python3 build.py]  index.html
+    build.py mengganti dua token placeholder (hero background + logo) dengan
+    base64 data-URI, dan MENOLAK menulis output bila masih ada token tersisa.
+    Aturan turunannya: JANGAN pernah menulis nama token itu di tempat lain di
+    file ini (komentar sekalipun) — replace-nya global, jadi token yang muncul
+    di komentar akan ikut diganti dan menggemukkan file build ~500 KB.
+    Konsekuensinya: di dalam index.html tidak boleh ada satu pun request ke
+    jaringan / path relatif. Itu satu-satunya alasan file ini tetap utuh
+    saat dibuka lewat file://.
+
+  ATURAN EDIT
+    · Teks hero, isi About, FAQ, dan data member = konten, bebas diubah.
+    · Baris bertanda ★KRITIS jangan dihapus/dipindah tanpa alasan: kalau salah
+      satu lepas, gejalanya bukan error merah, melainkan halaman kosong atau
+      file hasil download jadi rusak (logo pecah, hero putih).
+    · Setelah edit:  python3 build.py && python3 qa_audit.py
+
+  INDEKS PENANDA
+    [CSS-nn] blok gaya  ·  [MK-nn] blok markup  ·  [JS-nn] blok skrip
+    ★KRITIS  = halaman rusak / tidak standalone kalau barisnya dihapus
+    ◆PENTING = interaksi atau aksesibilitas yang rusak, tampilan tetap mirip
+  ==========================================================================
+-->
+<style>
+  /* ============================================================
+     PACIFIC NOVA — single page app
+     views: #/ (home) · #/about · #/faq · #/passport
+     ============================================================ */
+  :root {
+    --ink: #203038;
+    --ink-soft: rgba(32,48,56,.72);
+    --ink-faint: rgba(32,48,56,.45);
+    --navy: #162b52;
+    --navy-lift: #1f3d70;
+    --sky: #7ea9c6;
+    --glass: rgba(255,255,255,.55);
+    --glass-line: rgba(255,255,255,.72);
+    --radius: 26px;
+  }
+
+  /* ------------------------------------------------------------------------
+     [CSS-01] ★KRITIS · dasar global
+     · color-scheme(light) : mencegah form control (search input, scrollbar)
+       digelapkan auto oleh browser — warna kartu bisa jadi tidak terbaca.
+     · overflow-x:hidden    : blob dekoratif (.b1/.b2) sengaja keluar viewport.
+     · [hidden]{display:none!important} : WAJIB. Banyak elemen (hint, card,
+       sheet, note) dapat display:grid/flex dari classnya, jadi atribut
+       hidden saja tidak cukup untuk menyembunyikannya.
+     · :focus-visible       : satu-satunya indikator fokus; tanpa ini navigasi
+       keyboard di nav/hamburger/search tidak terlihat.
+     ---------------------------------------------------------------------- */
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; color-scheme: light; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--ink);
+    background: #fff;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  body[data-view="home"] { background: transparent; }
+  body:not([data-view="home"]) { background: #e6f0f6; }
+  a { color: inherit; text-decoration: none; }
+  [hidden] { display: none !important; }
+  button, input { font: inherit; color: inherit; }
+  ::selection { background: rgba(22,43,82,.14); }
+  :focus-visible { outline: 2px solid var(--navy); outline-offset: 3px; border-radius: 6px; }
+
+  /* ------------------------------------------------------------------------
+     [CSS-02] · lapisan latar dekoratif (semua view KECUALI home)
+     .bg disembunyikan lewat  body[data-view="home"] .bg{display:none}  karena
+     hero sudah membawa gambarnya sendiri (lihat [CSS-05]).
+     ---------------------------------------------------------------------- */
+  .bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+  body[data-view="home"] .bg { display: none; }
+  .bg-base {
+    position: absolute; inset: -10%;
+    background:
+      radial-gradient(120% 90% at 12% 0%, #f4fafd 0%, rgba(244,250,253,0) 55%),
+      radial-gradient(90% 70% at 88% 8%, #eef6fb 0%, rgba(238,246,251,0) 60%),
+      linear-gradient(180deg, #e9f3f9 0%, #d5e6f0 58%, #c9dfeb 100%);
+  }
+  .blob { position: absolute; border-radius: 50%; filter: blur(70px); opacity: .55; }
+  .b1 { width: 46vw; height: 46vw; left: -12vw; top: 6vh; background: #fff; animation: drift1 26s ease-in-out infinite alternate; }
+  .b2 { width: 38vw; height: 38vw; right: -10vw; top: 22vh; background: #b9d5e8; opacity: .7; animation: drift2 32s ease-in-out infinite alternate; }
+  .b3 { width: 30vw; height: 30vw; left: 28vw; bottom: -14vh; background: #fff; opacity: .45; animation: drift1 38s ease-in-out infinite alternate-reverse; }
+  @keyframes drift1 { from { transform: translate3d(0,0,0) scale(1); } to { transform: translate3d(4vw,-3vh,0) scale(1.12); } }
+  @keyframes drift2 { from { transform: translate3d(0,0,0) scale(1.05); } to { transform: translate3d(-5vw,4vh,0) scale(1); } }
+  .flare { position: absolute; right: -6vw; bottom: -10vh; width: 46vw; opacity: .5; }
+  .flare svg { width: 100%; height: auto; display: block; filter: blur(2px); }
+  .grain {
+    position: absolute; inset: 0; opacity: .38; mix-blend-mode: soft-light;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='.5'/></svg>");
+  }
+
+  /* ------------------------------------------------------------------------
+     [CSS-03] ★KRITIS · shell + nav sticky
+     nav { position: sticky } adalah asal semua offset: tinggi 68px dipakai di
+     .hero{min-height:calc(100svh - 68px)} dan #contact{scroll-margin-top:92px}.
+     Mengubah tinggi nav tanpa mengubah ketiganya = hero ketotong / anchor
+    "Contact Us" mendarat di tengah judul.
+     ---------------------------------------------------------------------- */
+  .page { position: relative; z-index: 1; min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column; }
+  nav {
+    height: 68px;
+    flex: 0 0 auto;
+    display: flex; align-items: center; gap: clamp(16px, 3vw, 44px);
+    padding: 0 clamp(16px, 3.4vw, 40px);
+    position: sticky; top: 0; z-index: 20;
+    background: rgba(255,255,255,.62);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+  body:not([data-view="home"]) nav { border-bottom: 1px solid rgba(255,255,255,.6); }
+  .brand { display: flex; align-items: center; flex: 0 0 auto; }
+  .brand-logo { display: block; height: 40px; width: auto; }
+  .wordmark { display: none; font-size: 15px; font-weight: 650; letter-spacing: -.02em; color: var(--navy); line-height: 1; }
+  .wordmark i { font-family: Georgia, serif; font-weight: 400; letter-spacing: -.01em; margin-left: 3px; }
+  .brand.no-logo .brand-logo { display: none; }
+  .brand.no-logo .wordmark { display: block; }
+  .navlinks { display: flex; align-items: center; gap: clamp(16px, 2.4vw, 38px); margin-left: clamp(6px, 2vw, 28px); font-size: 11.5px; color: #707075; flex: 1 1 auto; }
+  .navlinks a { position: relative; padding: 6px 0; transition: color .2s ease; white-space: nowrap; }
+  .navlinks a:hover { color: #17171b; }
+  .navlinks a[aria-current="page"] { color: var(--navy); font-weight: 650; }
+  .navlinks a[aria-current="page"]::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: -2px; height: 2px; border-radius: 2px;
+    background: linear-gradient(90deg, var(--navy), rgba(22,43,82,.15));
+  }
+  .nav-right { display: flex; align-items: center; gap: 11px; margin-left: auto; font-size: 10px; color: #85858b; flex: 0 0 auto; }
+  .nav-btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 15px; border-radius: 999px;
+    background: #fff; color: #28282d; border: 0; cursor: pointer;
+    box-shadow: 0 3px 12px rgba(0,0,0,.07);
+    font-weight: 600; font-size: 10.5px;
+    transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+    white-space: nowrap;
+  }
+  .nav-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,0,0,.1); }
+  .nav-btn.solid { background: var(--navy); color: #fff; box-shadow: 0 8px 22px rgba(22,43,82,.22); }
+  .nav-btn.solid:hover { background: var(--navy-lift); }
+  .nav-btn svg { width: 12px; height: 12px; }
+  .burger {
+    display: none; width: 40px; height: 40px; border: 0; border-radius: 12px; cursor: pointer;
+    background: rgba(255,255,255,.8); box-shadow: 0 3px 12px rgba(0,0,0,.07);
+    align-items: center; justify-content: center; flex-direction: column; gap: 5px;
+    transition: background .2s ease, transform .2s ease;
+  }
+  .burger:hover { transform: translateY(-1px); }
+  .burger i { display: block; width: 17px; height: 1.8px; border-radius: 2px; background: var(--navy); transition: transform .3s cubic-bezier(.22,.8,.26,1), opacity .2s ease; }
+  .burger[aria-expanded="true"] i:nth-child(1) { transform: translateY(6.8px) rotate(45deg); }
+  .burger[aria-expanded="true"] i:nth-child(2) { opacity: 0; }
+  .burger[aria-expanded="true"] i:nth-child(3) { transform: translateY(-6.8px) rotate(-45deg); }
+  .sheet {
+    position: absolute; left: 0; right: 0; top: 100%;
+    display: none; flex-direction: column; gap: 2px;
+    padding: 10px clamp(14px, 4vw, 22px) 18px;
+    background: rgba(255,255,255,.9);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255,255,255,.7);
+    box-shadow: 0 26px 50px rgba(32,48,56,.14);
+    animation: sheetIn .28s cubic-bezier(.22,.8,.26,1) both;
+  }
+  .sheet.is-open { display: flex; }
+  @keyframes sheetIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+  .sheet a, .sheet button {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 14px 4px; border: 0; background: transparent; cursor: pointer;
+    font-size: 14px; letter-spacing: -.02em; color: var(--ink); text-align: left; width: 100%;
+  }
+  .sheet a + a, .sheet a + button, .sheet button + a { border-top: 1px solid rgba(32,48,56,.08); }
+  .sheet svg { width: 14px; height: 14px; color: var(--ink-faint); flex: 0 0 auto; }
+  .sheet .sheet-cta {
+    margin-top: 12px; justify-content: center; gap: 8px;
+    padding: 14px 18px; border-radius: 999px; background: var(--navy); color: #fff; font-weight: 650; font-size: 13px;
+  }
+  .sheet .sheet-cta svg { color: #fff; }
+
+  /* ------------------------------------------------------------------------
+     [CSS-04] ★KRITIS · mekanisme SPA view
+     Router (lihat [JS-04]) hanya men-toggle atribut hidden pada tiap section
+     view dan data-view pada elemen body. Aturan di bawah adalah sisi CSS dari
+     kontrak itu; `.view[hidden]` harus menang atas display:flex baris di atas.
+     ---------------------------------------------------------------------- */
+  .view { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
+  .view[hidden] { display: none !important; }
+  .is-active { animation: viewIn .45s cubic-bezier(.22,.8,.26,1) both; }
+  @keyframes viewIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+  /* ---------- shared bits ---------- */
+  h1 { margin: 0; font-weight: 500; letter-spacing: -.06em; line-height: .95; color: var(--ink); }
+  h1 em { font-family: Georgia, "Times New Roman", serif; font-weight: 400; letter-spacing: -.05em; }
+  .lede { margin: 16px 0 0; font-size: 13px; line-height: 1.62; color: var(--ink-soft); }
+  .primary {
+    border: 0; padding: 11px 17px; border-radius: 999px;
+    font-size: 11px; font-weight: 650; cursor: pointer; background: #fff; color: #26262b;
+  }
+  a.primary {
+    display: inline-flex; align-items: center; gap: 8px; line-height: 1;
+    box-shadow: 0 6px 22px rgba(32,48,56,.10);
+    transition: transform .25s ease, box-shadow .25s ease;
+  }
+  a.primary:hover { transform: translateY(-1px); box-shadow: 0 10px 26px rgba(32,48,56,.16); }
+  a.primary svg { width: 13px; height: 13px; }
+  .ico {
+    width: 30px; height: 30px; flex: 0 0 auto; border-radius: 50%;
+    display: grid; place-items: center;
+    background: linear-gradient(160deg, #eaf2f9, #d3e4f0); color: var(--navy);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.9), 0 4px 12px rgba(38,74,110,.08);
+  }
+  .ico svg { width: 14px; height: 14px; }
+
+  /* ------------------------------------------------------------------------
+     [CSS-05] ★KRITIS · hero home (judul/subjudul/CTA terpusat, layar lebar & kecil)
+     Kontrak posisi, jangan diubah sebagian:
+       .hero        : grid + place-items:center  -> blok hero persis di tengah
+                      area (viewport tinggi dikurangi nav).
+       .hero-inner  : lebar maksimum blok teks (1080 / 1240 di >=1500px)
+       .content     : 620px, margin auto -> teks tidak melebar jadi 1 baris
+                      3 kata di monitor ultrawide.
+       .hero        : background-color #dcebf3 = fallback kalau suatu saat
+                      gambar gagal; halaman tidak pernah jadi putih.
+       · background-image : isinya placeholder yang diisi build.py. JANGAN
+         diganti path file (assets/...): hanya data-URI yang bikin hasil
+         download tetap utuh.
+     ---------------------------------------------------------------------- */
+  .hero {
+    position: relative;
+    flex: 1 1 auto;
+    display: grid;
+    place-items: center;
+    min-height: calc(100svh - 68px);
+    padding: clamp(28px, 6vh, 72px) clamp(20px, 5vw, 72px);
+    overflow: hidden;
+    isolation: isolate;
+    background-color: #dcebf3;
+    background-image: url(__HERO_BG__);
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+  }
+  .hero-inner { width: 100%; max-width: 1080px; display: flex; justify-content: flex-start; }
+  .content { max-width: 620px; position: relative; z-index: 4; }
+  .view-home h1 {
+    font-size: clamp(38px, 6.1vw, 78px);
+    line-height: .93;
+    text-shadow: 0 2px 18px rgba(255,255,255,.35);
+    text-wrap: balance;
+  }
+  .description { max-width: 470px; margin: 20px 0 26px; color: rgba(32,48,56,.72); font-size: 13.5px; line-height: 1.62; }
+  .description b { font-weight: 650; color: var(--navy); }
+  .actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .link-quiet { display: inline-flex; align-items: center; gap: 7px; font-size: 11.5px; font-weight: 600; color: var(--navy); opacity: .85; }
+  .link-quiet:hover { opacity: 1; text-decoration: underline; text-underline-offset: 4px; }
+  .link-quiet svg { width: 12px; height: 12px; }
+
+  /* ------------------------------------------------------------------------
+     [CSS-06] ◆PENTING · layout dokumen (About + FAQ berbagi kelas yang sama)
+     .doc = satu measure untuk dua view: mengubah max-width di sini otomatis
+     merapikan About dan FAQ sekaligus.
+     ---------------------------------------------------------------------- */
+  .doc { width: 100%; max-width: 1080px; margin: 0 auto; padding: clamp(34px, 7vh, 76px) clamp(20px, 4vw, 40px) 60px; }
+  .doc-head { max-width: 720px; }
+  .view-about h1, .view-faq h1 { font-size: clamp(34px, 5vw, 56px); }
+  .doc h2 { margin: 0 0 4px; font-size: 17px; letter-spacing: -.035em; font-weight: 650; }
+  .section { margin-top: clamp(34px, 6vh, 60px); }
+  .eyebrow-row { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
+  .eyebrow-row p { margin: 0; font-size: 11.5px; color: var(--ink-faint); max-width: 420px; }
+
+  .panel {
+    border-radius: 22px;
+    background: var(--glass);
+    border: 1px solid var(--glass-line);
+    box-shadow: 0 22px 56px rgba(38,74,110,.09), inset 0 1px 0 rgba(255,255,255,.7);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .feature { padding: 22px; }
+  .feature .ico { width: 34px; height: 34px; margin-bottom: 14px; }
+  .feature h3 { margin: 0 0 7px; font-size: 13.5px; letter-spacing: -.03em; font-weight: 650; }
+  .feature p { margin: 0; font-size: 11.5px; line-height: 1.6; color: var(--ink-soft); }
+  .feature .step { font-size: 9.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--ink-faint); display: block; margin-bottom: 8px; }
+
+  .stats { display: flex; flex-wrap: wrap; gap: 10px; }
+  .stat { flex: 1 1 150px; padding: 16px 18px; border-radius: 18px; background: rgba(255,255,255,.5); border: 1px solid rgba(255,255,255,.7); }
+  .stat b { display: block; font-size: 26px; font-weight: 500; letter-spacing: -.05em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .stat span { display: block; margin-top: 7px; font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-faint); }
+
+  /* tiers */
+  .tier-card { padding: 22px; display: flex; flex-direction: column; align-items: flex-start; gap: 12px; position: relative; overflow: hidden; }
+  .tier-card ul, .tier-card .t-sub, .tier-card .t-top { width: 100%; }
+  .tier-card.dark { background: linear-gradient(160deg, #162b52, #0e1a30); color: #fff; border-color: rgba(255,255,255,.16); }
+  .tier-card.dark .t-sub, .tier-card.dark li { color: rgba(255,255,255,.78); }
+  .tier-card.dark .t-req { background: rgba(255,255,255,.14); color: #dcebf8; }
+  .t-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .t-name { font-size: 15px; font-weight: 650; letter-spacing: -.03em; display: flex; align-items: center; gap: 9px; }
+  .t-name i { width: 10px; height: 10px; border-radius: 50%; display: block; font-style: normal; }
+  .t-req { font-size: 9.5px; font-weight: 650; letter-spacing: .06em; padding: 5px 9px; border-radius: 999px; background: rgba(22,43,82,.07); color: var(--navy); font-variant-numeric: tabular-nums; }
+  .t-sub { font-size: 11px; color: var(--ink-soft); margin: 0; line-height: 1.55; }
+  .tier-card ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .tier-card li { display: flex; gap: 9px; align-items: flex-start; font-size: 11.5px; line-height: 1.5; color: var(--ink-soft); }
+  .tier-card li svg { width: 12px; height: 12px; flex: 0 0 auto; margin-top: 2px; opacity: .8; }
+  /* ------------------------------------------------------------------------
+     [CSS-07] · kartu tier (About)
+     .t-flag dulu ribbon miring di sudut dan MENIMPA chip "600+ NAS"; sekarang
+     pill inline di bawah nama tier. Kalau dikembalikan jadi ribbon, tambahkan
+     overflow:hidden pada .tier-card atau teksnya terpotong lagi.
+     ---------------------------------------------------------------------- */
+  .t-flag { display: inline-flex; align-self: flex-start; align-items: center; gap: 6px; font-size: 8.5px; font-weight: 650; letter-spacing: .14em; text-transform: uppercase;
+    padding: 5px 9px; border-radius: 999px; background: rgba(232,197,106,.18); color: #f0d79a; box-shadow: inset 0 0 0 1px rgba(232,197,106,.3); }
+
+  /* faq */
+  /* ------------------------------------------------------------------------
+     [CSS-08] · alat + daftar FAQ (render dari data, lihat [JS-13])
+     ---------------------------------------------------------------------- */
+  .faq-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+  .filter {
+    display: flex; align-items: center; gap: 9px; flex: 1 1 240px; max-width: 340px;
+    padding: 9px 16px; border-radius: 999px;
+    background: var(--glass); border: 1px solid var(--glass-line);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.7);
+  }
+  .filter svg { width: 14px; height: 14px; color: var(--ink-faint); flex: 0 0 auto; }
+  .filter input { border: 0; background: transparent; outline: 0; width: 100%; font-size: 12px; }
+  .chips { display: flex; gap: 7px; flex-wrap: wrap; }
+  .chips button {
+    border: 1px solid rgba(255,255,255,.8); background: rgba(255,255,255,.5); cursor: pointer;
+    font-size: 10px; font-weight: 600; color: var(--ink-soft);
+    padding: 7px 12px; border-radius: 999px; transition: all .2s ease;
+  }
+  .chips button[aria-pressed="true"] { background: var(--navy); color: #fff; border-color: transparent; }
+  .faq-list { display: flex; flex-direction: column; gap: 10px; }
+  details.qa { border-radius: 18px; overflow: hidden; }
+  details.qa summary {
+    display: flex; align-items: center; gap: 14px;
+    padding: 17px 20px; cursor: pointer; list-style: none;
+    font-size: 13px; letter-spacing: -.025em; font-weight: 600;
+  }
+  details.qa summary::-webkit-details-marker { display: none; }
+  details.qa summary .q-tag { font-size: 8.5px; font-weight: 650; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-faint); flex: 0 0 auto; }
+  details.qa summary .q-text { flex: 1 1 auto; }
+  details.qa summary .q-plus {
+    flex: 0 0 auto; width: 24px; height: 24px; border-radius: 50%;
+    display: grid; place-items: center; background: rgba(22,43,82,.07); color: var(--navy);
+    font-size: 15px; line-height: 1; transition: transform .3s cubic-bezier(.22,.8,.26,1), background .2s ease;
+  }
+  details.qa[open] summary .q-plus { transform: rotate(45deg); background: var(--navy); color: #fff; }
+  details.qa .qa-body { padding: 0 20px 18px 20px; font-size: 12px; line-height: 1.65; color: var(--ink-soft); max-width: 68ch; }
+  .qa-empty { padding: 20px; font-size: 12px; color: var(--ink-faint); text-align: center; }
+
+  /* [CSS-09] · band CTA penutup About & FAQ (dipakai dua view, jangan di-duplikat) */
+  .cta-band { margin-top: 44px; padding: clamp(22px, 4vw, 34px); border-radius: 24px; display: flex; align-items: center; gap: 22px; flex-wrap: wrap; justify-content: space-between;
+    background: linear-gradient(150deg, #162b52, #0e1a30); color: #fff; box-shadow: 0 30px 70px rgba(14,26,48,.28); }
+  .cta-band h3 { margin: 0; font-size: clamp(19px, 2.6vw, 26px); letter-spacing: -.045em; font-weight: 500; }
+  .cta-band h3 em { font-family: Georgia, serif; }
+  .cta-band p { margin: 8px 0 0; font-size: 11.5px; color: rgba(255,255,255,.7); max-width: 44ch; line-height: 1.55; }
+  .cta-band a { background: #fff; color: #16263f; padding: 12px 20px; border-radius: 999px; font-size: 11.5px; font-weight: 650; display: inline-flex; align-items: center; gap: 8px; }
+  .cta-band a svg { width: 13px; height: 13px; }
+  .cta-band a:hover { transform: translateY(-1px); }
+
+  /* [CSS-10] ★KRITIS · target deep-link #/about#contact
+     92px = nav 68px + ruang napas. Tanpa scroll-margin, anchor mendarat
+     tertutup nav dan kelihatan seperti "link ke bagian yang salah". */
+  #contact { scroll-margin-top: 92px; }
+  .contact-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .contact-card { padding: 20px; display: flex; flex-direction: column; gap: 6px; }
+  .contact-card span { font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-faint); }
+  .contact-card b { font-size: 13px; letter-spacing: -.02em; font-weight: 650; }
+  .contact-card small { font-size: 11px; color: var(--ink-soft); line-height: 1.5; }
+
+  /* ------------------------------------------------------------------------
+     [CSS-11] ◆PENTING · view My Nova Passport
+     .card { grid-template-columns: 328px 1fr } -> panel navy (member) + panel
+     activity. .member{margin-top:auto} pada .benefits membuat "My Benefit"
+     selalu rata bawah meski jumlah baris history berbeda.
+     ---------------------------------------------------------------------- */
+  .pmain { flex: 1 1 auto; width: 100%; max-width: 1000px; margin: 0 auto; padding: clamp(30px, 6vh, 66px) clamp(20px, 4vw, 40px) 40px; }
+  .view-passport h1 { font-size: clamp(34px, 5vw, 58px); }
+  .search {
+    margin-top: 28px; display: flex; align-items: center; gap: 10px; max-width: 620px;
+    padding: 8px 8px 8px 20px; border-radius: 999px;
+    background: var(--glass); border: 1px solid var(--glass-line);
+    box-shadow: 0 20px 50px rgba(38,74,110,.10), inset 0 1px 0 rgba(255,255,255,.7);
+    backdrop-filter: blur(16px); transition: box-shadow .25s ease, border-color .25s ease;
+  }
+  .search:focus-within { border-color: rgba(22,43,82,.28); box-shadow: 0 24px 60px rgba(38,74,110,.16), 0 0 0 4px rgba(255,255,255,.55); }
+  .search.shake { animation: shake .42s cubic-bezier(.36,.07,.19,.97); }
+  @keyframes shake { 10%,90%{transform:translateX(-2px)} 20%,80%{transform:translateX(4px)} 30%,50%,70%{transform:translateX(-7px)} 40%,60%{transform:translateX(7px)} }
+  .search .glass-icon { width: 17px; height: 17px; flex: 0 0 auto; color: var(--ink-faint); }
+  .search input { flex: 1 1 auto; min-width: 0; border: 0; outline: 0; background: transparent; font-size: 13.5px; padding: 10px 0; }
+  /* [CSS-11a] ◆PENTING · ring fokus keyboard DI DALAM pill pencarian.
+     .search input{outline:0} di atas menekan ring global :focus-visible
+     (spesifisitas lebih tinggi), jadi keyboard user hanya punya halo wrapper.
+     Aturan ini mengembalikan ring sungguhan; urutannya setelah aturan input
+     itu bukan kosmetik — kalau didahulukan, ring-nya hilang lagi. */
+  .search input:focus-visible { outline: 2px solid var(--navy); outline-offset: 2px; border-radius: 10px; }
+  .search input::placeholder { color: var(--ink-faint); }
+  .clear {
+    flex: 0 0 auto; width: 22px; height: 22px; border: 0; border-radius: 50%;
+    background: rgba(32,48,56,.08); color: var(--ink-soft);
+    display: none; align-items: center; justify-content: center; cursor: pointer; font-size: 13px; line-height: 1;
+  }
+  .clear:hover { background: rgba(32,48,56,.14); }
+  .search.has-value .clear { display: inline-flex; }
+  .go {
+    flex: 0 0 auto; display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 22px; border: 0; border-radius: 999px;
+    background: var(--navy); color: #fff; font-size: 11.5px; font-weight: 650; letter-spacing: -.01em; cursor: pointer;
+    box-shadow: 0 10px 24px rgba(22,43,82,.24);
+    transition: background .2s ease, transform .2s ease, box-shadow .2s ease;
+  }
+  .go:hover { background: var(--navy-lift); transform: translateY(-1px); box-shadow: 0 14px 30px rgba(22,43,82,.3); }
+  .go:active { transform: translateY(0); }
+  .go svg { width: 13px; height: 13px; }
+  .note { margin: 13px 0 0; font-size: 10.5px; font-weight: 600; color: #a8352f; }
+  .hint { margin-top: 24px; display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--ink-faint); }
+  .hint .ico { width: 22px; height: 22px; background: rgba(255,255,255,.6); box-shadow: none; }
+  .hint .ico svg { width: 11px; height: 11px; }
+
+  .notfound {
+    margin-top: 28px; display: flex; align-items: center; gap: 14px; padding: 20px 22px; border-radius: 20px;
+    background: rgba(255,255,255,.55); border: 1px solid rgba(168,53,47,.18);
+    box-shadow: 0 18px 44px rgba(38,74,110,.08); backdrop-filter: blur(14px);
+    font-size: 11.5px; color: var(--ink-soft);
+  }
+  .notfound .ico { width: 30px; height: 30px; border-radius: 50%; background: rgba(168,53,47,.09); color: #a8352f; box-shadow: none; }
+  .notfound strong { display: block; font-size: 12.5px; color: var(--ink); letter-spacing: -.02em; margin-bottom: 3px; }
+
+  .result { margin-top: 28px; }
+  .card {
+    display: grid; grid-template-columns: 328px 1fr; gap: 1px;
+    border-radius: var(--radius); overflow: hidden;
+    background: rgba(255,255,255,.62); border: 1px solid rgba(255,255,255,.8);
+    box-shadow: 0 40px 90px rgba(38,74,110,.16), inset 0 1px 0 rgba(255,255,255,.9);
+    backdrop-filter: blur(20px); scroll-margin-top: 88px;
+  }
+  .reveal { animation: rise .6s cubic-bezier(.22,.8,.26,1) both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(18px) scale(.99); } to { opacity: 1; transform: none; } }
+
+  .member {
+    position: relative; display: flex; flex-direction: column; padding: 26px; color: #fff; overflow: hidden;
+    background:
+      radial-gradient(120% 80% at 0% 0%, #22406f 0%, rgba(34,64,111,0) 60%),
+      linear-gradient(160deg, #162b52 0%, #13233f 60%, #0e1a30 100%);
+  }
+  .member::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(90% 60% at 100% 0%, rgba(126,169,198,.35), transparent 60%); }
+  .m-top { display: flex; align-items: center; gap: 14px; position: relative; z-index: 1; }
+  .avatar {
+    width: 54px; height: 54px; flex: 0 0 auto; border-radius: 50%; display: grid; place-items: center;
+    font-size: 20px; font-weight: 600; letter-spacing: -.03em;
+    background: linear-gradient(150deg, #7ea9c6, #4b7ba6 60%, #2b527f);
+    box-shadow: 0 0 0 1px rgba(255,255,255,.35), 0 10px 24px rgba(0,0,0,.28);
+  }
+  .m-name { font-size: 25px; letter-spacing: -.05em; font-weight: 600; line-height: 1.1; }
+  .m-no { margin-top: 4px; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.62); }
+  .tier {
+    margin-top: 18px; position: relative; z-index: 1; align-self: flex-start;
+    display: inline-flex; align-items: center; gap: 8px; padding: 8px 13px; border-radius: 999px;
+    font-size: 11px; font-weight: 650; letter-spacing: -.01em; color: #eaf3fa;
+    background: linear-gradient(100deg, rgba(126,169,198,.34), rgba(255,255,255,.12));
+    border: 1px solid rgba(255,255,255,.32);
+  }
+  .tier svg { width: 13px; height: 13px; }
+  .m-sep { height: 1px; margin: 20px 0 16px; background: rgba(255,255,255,.16); position: relative; z-index: 1; }
+  .m-label { font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase; color: rgba(255,255,255,.6); position: relative; z-index: 1; }
+  .balance { display: flex; align-items: flex-end; gap: 9px; margin-top: 8px; position: relative; z-index: 1; }
+  .balance b { font-size: 52px; line-height: .86; font-weight: 500; letter-spacing: -.055em; font-variant-numeric: tabular-nums; }
+  .balance i { font-style: normal; font-size: 12px; font-weight: 650; letter-spacing: .06em; color: rgba(255,255,255,.72); padding-bottom: 5px; }
+  .updated { margin-top: 16px; position: relative; z-index: 1; display: flex; align-items: flex-start; gap: 9px; color: rgba(255,255,255,.68); }
+  .updated .pulse { margin-top: 4px; }
+  .updated-txt { display: flex; flex-direction: column; gap: 4px; font-size: 10px; letter-spacing: .02em; }
+  .updated time { font-size: 12.5px; font-weight: 600; letter-spacing: -.02em; color: #fff; font-variant-numeric: tabular-nums; }
+  .pulse { width: 6px; height: 6px; border-radius: 50%; background: #7ce0b0; flex: 0 0 auto; box-shadow: 0 0 0 0 rgba(124,224,176,.7); animation: pulse 2s ease-out infinite; }
+  @keyframes pulse { 70% { box-shadow: 0 0 0 7px rgba(124,224,176,0); } 100% { box-shadow: 0 0 0 0 rgba(124,224,176,0); } }
+
+  .benefits { margin-top: auto; position: relative; z-index: 1; padding-top: 4px; }
+  .b-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 11px; }
+  .b-head h3 { margin: 0; font-size: 9.5px; font-weight: 650; letter-spacing: .16em; text-transform: uppercase; color: rgba(255,255,255,.6); }
+  .b-head span { font-size: 8.5px; letter-spacing: .06em; color: rgba(255,255,255,.42); }
+  .benefits ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+  .benefits li { display: flex; align-items: center; gap: 10px; font-size: 11.5px; letter-spacing: -.01em; color: rgba(255,255,255,.9); }
+  .b-ico { width: 24px; height: 24px; flex: 0 0 auto; border-radius: 50%; display: grid; place-items: center; background: rgba(255,255,255,.1); box-shadow: inset 0 0 0 1px rgba(255,255,255,.2); color: #cfe2f2; }
+  .b-ico svg { width: 11px; height: 11px; }
+  .b-meta { margin-left: auto; font-size: 9.5px; color: rgba(255,255,255,.5); white-space: nowrap; }
+
+  .activity { padding: 26px; background: rgba(255,255,255,.5); min-width: 0; }
+  .a-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .a-head h2 { margin: 0; font-size: 15px; letter-spacing: -.035em; font-weight: 650; }
+  .chip { font-size: 9.5px; font-weight: 650; letter-spacing: .04em; padding: 6px 10px; border-radius: 999px; background: rgba(22,43,82,.07); color: var(--navy); font-variant-numeric: tabular-nums; }
+  ul.history { list-style: none; margin: 14px 0 0; padding: 0; }
+  ul.history li { display: flex; align-items: center; gap: 13px; padding: 12px; border-radius: 14px; transition: background .2s ease; animation: rowIn .5s cubic-bezier(.22,.8,.26,1) both; }
+  @keyframes rowIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  ul.history li + li { border-top: 1px solid rgba(32,48,56,.07); border-radius: 0 0 14px 14px; }
+  ul.history li:hover { background: rgba(255,255,255,.85); }
+  .h-label { flex: 1 1 auto; font-size: 12.5px; letter-spacing: -.02em; min-width: 0; }
+  .h-date { display: block; margin-top: 3px; font-size: 9.5px; letter-spacing: .02em; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+  .h-right { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+  .amount { font-size: 11.5px; font-weight: 650; letter-spacing: -.01em; padding: 6px 11px; border-radius: 999px; color: #1a6b47; background: rgba(37,168,112,.12); box-shadow: inset 0 0 0 1px rgba(37,168,112,.16); font-variant-numeric: tabular-nums; }
+
+  .pfoot {
+    flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
+    padding: 18px clamp(20px, 4vw, 40px) 26px;
+    font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: rgba(32,48,56,.45);
+  }
+  .pfoot a { color: var(--navy); font-weight: 650; letter-spacing: -.01em; text-transform: none; font-size: 11px; }
+  .pfoot a:hover { text-decoration: underline; }
+  .foot-links { display: flex; gap: 14px; }
+
+  /* ------------------------------------------------------------------------
+     [CSS-12] ★KRITIS · kontrak responsive
+     Dua angka yang tidak boleh lepas satu sama lain:
+       760px -> burger muncul + .navlinks/.desk hilang.  Nilai yang SAMA dibaca
+                 JS lewat MQ_NAV (lihat [JS-05]) untuk menutup sheet saat
+                 viewport melebar. Ganti satu tanpa yang lain = tombol menu
+                 hilang di tablet, atau sheet menggantung di desktop.
+       940px -> kartu passport & grid 3 kolom jadi 1 kolom.
+     ---------------------------------------------------------------------- */
+  @media (min-width: 1500px) {
+    .hero-inner { max-width: 1240px; }
+    .content { max-width: 680px; }
+    .description { max-width: 520px; font-size: 14.5px; }
+  }
+  @media (min-width: 1900px) {
+    .hero-inner { padding-left: clamp(40px, 6vw, 120px); }
+  }
+  @media (max-height: 700px) and (min-width: 761px) {
+    .hero { padding-top: 20px; padding-bottom: 20px; }
+    .view-home h1 { font-size: clamp(34px, 4.6vw, 54px); }
+    .description { margin: 14px 0 18px; }
+  }
+  @media (max-width: 1000px) {
+    .navlinks { gap: 18px; font-size: 11px; }
+  }
+  @media (max-width: 940px) { .card { grid-template-columns: 1fr; } .grid3 { grid-template-columns: 1fr; } .contact-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 760px) {
+    nav { height: 60px; }
+    .brand-logo { height: 33px; }
+    .navlinks, .nav-right .desk { display: none; }
+    .burger { display: inline-flex; }
+    .hero { min-height: calc(100svh - 60px); place-items: center; padding: 20px 20px clamp(24px, 5vh, 40px); background-position: 62% center; }
+    .hero-inner { justify-content: flex-start; }
+    .view-home h1 { font-size: clamp(34px, 10.5vw, 52px); line-height: .94; }
+    .description { max-width: 100%; margin: 14px 0 22px; font-size: 12.5px; }
+    .pmain, .doc { padding-top: 26px; }
+    .eyebrow-row { display: grid; gap: 8px; align-items: start; }
+    .eyebrow-row p { max-width: none; }
+    .stats { display: grid; grid-template-columns: 1fr 1fr; }
+    .stat { padding: 14px 16px; }
+    .stat b { font-size: 21px; }
+    .view-about h1, .view-faq h1 { font-size: clamp(30px, 8.6vw, 40px); }
+    .search { padding: 7px 7px 7px 15px; gap: 7px; border-radius: 22px; }
+    .search input { font-size: 13px; flex: 1 1 140px; }
+    .go { flex: 1 1 auto; justify-content: center; padding: 11px 16px; }
+    .member, .activity { padding: 22px; }
+    .balance b { font-size: 44px; }
+    .cta-band { flex-direction: column; align-items: flex-start; }
+  }
+  @media (max-width: 480px) {
+    nav { padding: 0 14px; }
+    .brand-logo { height: 31px; }
+    .hero { padding: 0 16px clamp(28px, 7vh, 44px); background-position: 66% center; }
+    .m-top { gap: 11px; }
+    .avatar { width: 44px; height: 44px; font-size: 17px; }
+    .m-name { font-size: 21px; }
+    ul.history li { padding: 11px 8px; gap: 10px; }
+    .h-label { font-size: 11.5px; }
+    .amount { font-size: 10.5px; padding: 5px 9px; }
+    .ico { width: 26px; height: 26px; }
+    .b-meta { display: none; }
+    .primary { padding: 10px 14px; font-size: 10px; }
+    .stats { gap: 8px; }
+    .stat { flex: 1 1 100%; }
+  }
+  /* ------------------------------------------------------------------------
+     [CSS-13] ◆PENTING · kontrak gerak
+     Mematikan animasi/transition DAN scroll halus. Sisi JS membaca query yang
+     sama lewat `reduced` (lihat [JS-00]) untuk countUp, clock-render, dan
+     scrollIntoView. Dua-duanya harus senada, tidak boleh salah satu.
+     ---------------------------------------------------------------------- */
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+    html { scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body data-view="home">
+
+<!-- [MK-01] ★KRITIS · SVG sprite = SATU-satunya sumber ikon.
+     Kontrak: setiap <use href="#i-x"> dan setiap  icon:'i-x'  di data member
+     (lihat [JS-07]) harus punya <symbol> di sini. Validator qa_audit.py (C1)
+     menjaga kontrak ini; ikon yang hilang tidak error — hanya jadi kotak kosong. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H6M11 6l-6 6 6 6"/></symbol>
+  <symbol id="i-ticket" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9V7a1 1 0 011-1h16a1 1 0 011 1v2a3 3 0 000 6v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2a3 3 0 000-6z"/><path d="M14 6v12"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.4L19.5 10l-5.6 1.6L12 17l-1.9-5.4L4.5 10l5.6-1.6z"/><path d="M18.5 16.5l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/></symbol>
+  <symbol id="i-gem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h10l4 6-9 12L3 9z"/><path d="M3 9h18M9.5 3L8 9l4 12 4-12-1.5-6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.2"/></symbol>
+  <symbol id="i-wallet" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5A2.5 2.5 0 015.5 6H19a2 2 0 012 2v9a2 2 0 01-2 2H5.5A2.5 2.5 0 013 16.5z"/><path d="M3 9.5h18M16.5 13.5h1.5"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l2.4 5 5.6.7-4.1 3.7 1.1 5.4L12 16.1 7 18.8l1.1-5.4L4 9.7l5.6-.7z"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 6.5L12 13l8.5-6.5"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h3l2 5-2.5 1.5a10 10 0 005.5 5.5L16 12.5l5 2v3a2 2 0 01-2.2 2A16 16 0 014 5.2A2 2 0 016 3z"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-5.6 7-11a7 7 0 10-14 0c0 5.4 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></symbol>
+</svg>
+
+<!-- [MK-02] · lapisan dekoratif murni — aria-hidden, pointer-events:none.
+     Tidak ada isi yang informatif di sini; kalau ditambah, harus ikut aria-hidden. -->
+<div class="bg" aria-hidden="true">
+  <div class="bg-base"></div>
+  <span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span>
+  <div class="flare">
+    <svg viewBox="0 0 400 400"><path d="M200 0c12 116 72 176 200 200-128 24-188 84-200 200-12-116-72-176-200-200C128 176 188 116 200 0z" fill="rgba(255,255,255,.75)"/></svg>
+  </div>
+  <div class="grain"></div>
+</div>
+
+<div class="page">
+  <!-- [MK-03] ★KRITIS · navbar = satu-satunya navigasi antar view.
+       · src pada <img> di bawah : placeholder yang diisi build.py jadi data-URI.
+       · onerror -> .no-logo      : fallback wordmark teks. Ini yang menjaga
+         user tidak pernah lagi melihat "kotak gambar rusak" kalau aset hilang.
+       · #navContact/#navPassport/#navBack di-toggle router ([JS-04]); jangan
+         dipindah ke dalam .navlinks karena breakpoint sembunyinya berbeda. -->
+  <nav aria-label="Main">
+    <a class="brand" href="#/" aria-label="Pacific Nova — home">
+      <img class="brand-logo" src="__LOGO_URI__" alt="Pacific Nova"
+           onerror="this.closest('.brand').classList.add('no-logo')">
+      <span class="wordmark" aria-hidden="true">PACIFIC NOVA<i>Nova</i></span>
+    </a>
+
+    <div class="navlinks">
+      <a href="#/about" data-route="about">About Pacific Nova</a>
+      <a href="#/faq" data-route="faq">FAQ</a>
+    </div>
+
+    <div class="nav-right">
+      <a class="nav-btn desk" href="#/about#contact" id="navContact">Contact Us</a>
+      <a class="nav-btn solid desk" href="#/passport" id="navPassport" hidden>My Nova Passport<svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+      <a class="nav-btn desk" href="#/" id="navBack" hidden><svg aria-hidden="true"><use href="#i-back"/></svg>Back to Home</a>
+      <button class="burger" id="burger" type="button" aria-expanded="false" aria-controls="sheet" aria-label="Open menu">
+        <i></i><i></i><i></i>
+      </button>
+    </div>
+
+    <!-- [MK-04] ◆PENTING · menu layar kecil. Daftarnya adalah cerminan nav
+         desktop; router menutupnya otomatis setiap pindah view ([JS-05]). -->
+    <div class="sheet" id="sheet" role="group" aria-label="Site menu">
+      <a href="#/about" data-route="about">About Pacific Nova<svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+      <a href="#/faq" data-route="faq">FAQ<svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+      <a href="#/about#contact">Contact Us<svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+      <a class="sheet-cta" href="#/passport">My Nova Passport<svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+    </div>
+  </nav>
+
+  <!-- ================= HOME ================= -->
+  <section class="view view-home" id="view-home">
+    <div class="hero">
+      <div class="hero-inner">
+        <div class="content">
+          <h1>Collect moments.<br>Earn <em>Nova.</em></h1>
+          <p class="description">
+            Every NAS event you attend, every Nova Activity you join and every privilege you use turns into
+            <b>NAS points</b> on one passport — see your balance, tier and benefits in seconds.
+          </p>
+          <div class="actions">
+            <a class="primary" href="#/passport">My Nova Passport<svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+            <a class="link-quiet" href="#/faq">How NAS works<svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ────────────────────────────────────────────────────────────────────────
+       [MK-05] · VIEW ABOUT  (#/about)
+       Semua teks di blok ini adalah konten: boleh ditulis ulang tanpa menyentuh
+       CSS/JS. Struktur yang dipakai bersama FAQ: .doc > .doc-head > .section.
+       #contact adalah-satunya anchor yang dirujuk dari nav & sheet.
+       ────────────────────────────────────────────────────────────────────── -->
+  <section class="view view-about" id="view-about" hidden>
+    <main class="doc">
+      <header class="doc-head">
+        <h1>About <em>Pacific Nova</em></h1>
+        <p class="lede">
+          Pacific Nova is a membership built around moments rather than receipts. We count the things you actually
+          show up for — events, activities, and the privileges you use — and turn them into NAS points that open
+          the next door.
+        </p>
+      </header>
+
+      <div class="section">
+        <div class="stats">
+          <div class="stat"><b>24,180</b><span>Members</span></div>
+          <div class="stat"><b>312</b><span>NAS events / year</span></div>
+          <div class="stat"><b>46</b><span>Partner venues</span></div>
+          <div class="stat"><b>1:1</b><span>NAS to reward value</span></div>
+        </div>
+      </div>
+
+      <section class="section">
+        <div class="eyebrow-row">
+          <h2>How a passport works</h2>
+          <p>Three moves, one balance. Nothing to redeem manually — NAS lands the moment your attendance is confirmed.</p>
+        </div>
+        <div class="grid3">
+          <article class="panel feature">
+            <span class="ico"><svg aria-hidden="true"><use href="#i-ticket"/></svg></span>
+            <span class="step">Step 01</span>
+            <h3>Show up</h3>
+            <p>Attend a NAS event, join a Nova Activity, or check in at a partner venue. Your member number does the rest.</p>
+          </article>
+          <article class="panel feature">
+            <span class="ico"><svg aria-hidden="true"><use href="#i-spark"/></svg></span>
+            <span class="step">Step 02</span>
+            <h3>Earn NAS</h3>
+            <p>Each action carries a fixed NAS value — +50 for an event, +10 for an activity, +5 for using a privilege.</p>
+          </article>
+          <article class="panel feature">
+            <span class="ico"><svg aria-hidden="true"><use href="#i-gem"/></svg></span>
+            <span class="step">Step 03</span>
+            <h3>Climb &amp; spend</h3>
+            <p>Your total sets the tier. Tier perks unlock automatically, and privileges spend back the points you earned.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="eyebrow-row">
+          <h2>Tiers</h2>
+          <p>Based on the NAS you earn in a rolling 12 months. Downgrades never happen mid-season.</p>
+        </div>
+        <div class="grid3">
+          <article class="panel tier-card">
+            <div class="t-top">
+              <span class="t-name"><i style="background:#5b9bd5"></i>Blue Nova</span>
+              <span class="t-req">0+ NAS</span>
+            </div>
+            <p class="t-sub">The starting tier — and where most of the perks already live.</p>
+            <ul>
+              <li><svg aria-hidden="true"><use href="#i-check"/></svg>Priority event registration</li>
+              <li><svg aria-hidden="true"><use href="#i-check"/></svg>2 free Nova Activities a month</li>
+              <li><svg aria-hidden="true"><use href="#i-check"/></svg>Exclusive partner privileges</li>
+            </ul>
+          </article>
+          <article class="panel tier-card dark">
+            <div class="t-top">
+              <span class="t-name"><i style="background:#e8c56a"></i>Gold Nova</span>
+              <span class="t-req">600+ NAS</span>
+            </div>
+            <span class="t-flag">Most members</span>
+            <p class="t-sub">Unlocks the guest seat and the longer reservation window.</p>
+            <ul>
+              <li><svg aria-hidden="true"><use href="#i-check"/></svg>Everything in Blue Nova</li>
+              <li><svg aria-hidden="true"><use href="#i-check"/></svg>+1 guest on every event</li>
+              <li><svg aria-hidden="true"><use href="#i-check"/></svg>6-hour early booking window</li>
+            </ul>
+          </article>
+          <article class="panel tier-card">
+            <div class="t-top">
+              <span class="t-name"><i style="background:#cfd8e3"></i>Platinum Nova</span>
+              <span class="t-req">1,500+ NAS</span>
+            </div>
+            <p class="t-sub">For the members who basically run the room.</p>
+            <ul>
+              <li><svg aria-hidden="true"><use href="#i-check"/></svg>Everything in Gold Nova</li>
+              <li><svg aria-hidden="true"><use href="#i-check"/></svg>Concierge line, answered in one ring</li>
+              <li><svg aria-hidden="true"><use href="#i-check"/></svg>Invitation-only gatherings</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="section panel feature" id="contact">
+        <div class="eyebrow-row" style="margin-bottom:14px">
+          <h2>Contact Us</h2>
+          <p>Member services answers in under a working day — usually much sooner.</p>
+        </div>
+        <div class="contact-grid">
+          <div class="contact-card panel">
+            <span><svg width="12" height="12" aria-hidden="true"><use href="#i-mail"/></svg> Email</span>
+            <b>members@pacificnova.example</b>
+            <small>Balance questions, missing NAS, tier reviews.</small>
+          </div>
+          <div class="contact-card panel">
+            <span><svg width="12" height="12" aria-hidden="true"><use href="#i-phone"/></svg> Member line</span>
+            <b>+62 21 1500 098</b>
+            <small>Mon–Sat, 08:00–20:00 WIB.</small>
+          </div>
+          <div class="contact-card panel">
+            <span><svg width="12" height="12" aria-hidden="true"><use href="#i-pin"/></svg> Lounge</span>
+            <b>SCBD, Jakarta</b>
+            <small>Walk in with your member number to redeem privileges.</small>
+          </div>
+        </div>
+      </section>
+
+      <div class="cta-band">
+        <div>
+          <h3>Your passport is <em>one search away.</em></h3>
+          <p>Check your NAS balance, tier and benefits — no login needed for the demo dataset.</p>
+        </div>
+        <a href="#/passport">My Nova Passport<svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+      </div>
+    </main>
+  </section>
+
+  <!-- ────────────────────────────────────────────────────────────────────────
+       [MK-06] · VIEW FAQ (#/faq)
+       Daftar <details> TIDAK ada di markup — dirender dari konstanta FAQS
+       ([JS-12]). Jadi menambah FAQ = menambah 1 entri array, bukan HTML.
+       ────────────────────────────────────────────────────────────────────── -->
+  <section class="view view-faq" id="view-faq" hidden>
+    <main class="doc">
+      <header class="doc-head">
+        <h1>Frequently asked <em>questions</em></h1>
+        <p class="lede">Everything about NAS points, tiers and privileges. Search it, or filter by what you care about.</p>
+      </header>
+
+      <div class="section">
+        <div class="faq-tools">
+          <label class="filter">
+            <svg aria-hidden="true"><use href="#i-search"/></svg>
+            <input id="faqFilter" type="search" placeholder="Search questions…" aria-label="Search frequently asked questions" autocomplete="off">
+          </label>
+          <div class="chips" role="group" aria-label="Filter FAQ by topic">
+            <button type="button" data-cat="all" aria-pressed="true">All</button>
+            <button type="button" data-cat="nas" aria-pressed="false">NAS points</button>
+            <button type="button" data-cat="tier" aria-pressed="false">Tiers</button>
+            <button type="button" data-cat="privilege" aria-pressed="false">Privileges</button>
+            <button type="button" data-cat="account" aria-pressed="false">Account</button>
+          </div>
+        </div>
+
+        <div class="faq-list" id="faqList"></div>
+        <p class="qa-empty" id="faqEmpty" hidden>No question matches that — try “NAS”, “expire” or “tier”.</p>
+
+        <div class="panel feature" style="margin-top:22px">
+          <h3 style="margin:0 0 6px;font-size:13.5px;letter-spacing:-.03em">Still unsure?</h3>
+          <p style="margin:0 0 14px">Member services can pull your ledger and explain any line in it.</p>
+          <a class="primary" href="#/about#contact" style="background:var(--navy);color:#fff">Contact Us<svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        </div>
+      </div>
+
+      <div class="cta-band">
+        <div>
+          <h3>See your own <em>numbers.</em></h3>
+          <p>Open the passport card for a balance, tier, benefits and activity history.</p>
+        </div>
+        <a href="#/passport">My Nova Passport<svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+      </div>
+    </main>
+  </section>
+
+  <!-- ────────────────────────────────────────────────────────────────────────
+       [MK-07] ★KRITIS · VIEW MY NOVA PASSPORT (#/passport)
+       Kerangka kartu (#card, #history, #benefitList, #mTotal, ...) kosong di
+       markup dan diisi JS setelah search. id pada elemen-elemen itu adalah
+       kontrak dengan [JS-08..JS-11]: mengganti id = panel jadi diam tanpa error.
+       <section class="result"> dibungkus aria-live="polite" supaya pembaca
+       layar mengumumkan kartu begitu hasil search masuk.
+       ────────────────────────────────────────────────────────────────────── -->
+  <section class="view view-passport" id="view-passport" hidden>
+    <main class="pmain">
+      <section>
+        <h1>My Nova <em>Passport</em></h1>
+        <p class="lede" style="max-width:470px">Type your member number to check your NAS points, current tier, benefits and the activity that earned them.</p>
+
+        <!-- [MK-08] ◆PENTING · form pencarian member.
+             novalidate: pesan salah ditampilkan sendiri lewat #note, bukan
+             balikan bawaan browser (gaya & bahasanya konsisten).
+             maxlength: nomor member tak pernah >24 char; ini pagar pertama
+             terhadap paste panjang sebelum normalisasi di [JS-07]. -->
+        <form class="search" id="searchForm" novalidate>
+          <svg class="glass-icon" aria-hidden="true"><use href="#i-search"/></svg>
+          <input id="memberInput" name="member" type="text" placeholder="Member number — e.g. 0983"
+                 aria-label="Member number" aria-describedby="note" aria-invalid="false"
+                 autocomplete="off" autocapitalize="characters" spellcheck="false"
+                 enterkeyhint="search" maxlength="24" inputmode="text" />
+          <button class="clear" id="clearBtn" type="button" aria-label="Clear member number">&times;</button>
+          <button class="go" type="submit">Search<svg aria-hidden="true"><use href="#i-arrow"/></svg></button>
+        </form>
+
+        <p class="note" id="note" role="status" aria-live="polite" hidden></p>
+
+        <div class="hint" id="hint">
+          <span class="ico"><svg aria-hidden="true"><use href="#i-info"/></svg></span>
+          <span>The passport card appears here once a member number is searched.</span>
+        </div>
+      </section>
+
+      <section class="result" aria-live="polite">
+        <!-- [MK-09] · empty-state pencarian gagal. #nfQuery diisi lewat
+             textContent (bukan innerHTML) supaya nomor member yang diketik
+             user tidak pernah diperlakukan sebagai markup — lihat [JS-07]. -->
+        <div class="notfound" id="notfound" hidden>
+          <span class="ico"><svg aria-hidden="true"><use href="#i-info"/></svg></span>
+          <div>
+            <strong>No passport record found</strong>
+            <span>We couldn’t match “<span id="nfQuery">—</span>” to a member. Check the number and search again.</span>
+          </div>
+        </div>
+
+        <div class="card" id="card" hidden>
+          <div class="member">
+            <div class="m-top">
+              <span class="avatar" id="avatar">J</span>
+              <div>
+                <div class="m-name" id="mName">—</div>
+                <div class="m-no">Member No. <span id="mNo">—</span></div>
+              </div>
+            </div>
+
+            <span class="tier"><svg aria-hidden="true"><use href="#i-gem"/></svg><span id="mTier">—</span></span>
+
+            <div class="m-sep"></div>
+
+            <div class="m-label">Total NAS</div>
+            <div class="balance"><b id="mTotal">0</b><i>NAS</i></div>
+
+            <div class="updated">
+              <span class="pulse" aria-hidden="true"></span>
+              <span class="updated-txt">
+                <span>NAS recently updated at</span>
+                <time id="mUpdated">—</time>
+              </span>
+            </div>
+
+            <div class="benefits">
+              <div class="m-sep"></div>
+              <div class="b-head">
+                <h3>My Benefit</h3>
+                <span id="bTier">Blue Nova</span>
+              </div>
+              <ul id="benefitList"></ul>
+            </div>
+          </div>
+
+          <div class="activity">
+            <div class="a-head">
+              <h2>NAS History</h2>
+              <span class="chip"><span id="hCount">0</span> activity</span>
+            </div>
+            <ul class="history" id="history"></ul>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="pfoot">
+      <span>© 2026 Pacific Nova · Member Services</span>
+      <span class="foot-links">
+        <a href="#/about">About Pacific Nova</a>
+        <a href="#/faq">FAQ</a>
+      </span>
+      <a href="#/">Back to landing page →</a>
+    </footer>
+  </section>
+</div>
+
+<script>
+/* ==========================================================================
+   [JS-00] · KONTRAK SKRIPT
+   · Satu IIFE 'use strict': tidak ada global yang bocor, dan id elemen
+     (#input, #form, #card, #note, #hint) tidak bisa tertukar dengan properti
+     global otomatis browser — tabrakan nama di sini gejalanya aneh dan tidak
+     masuk akal saat di-debug.
+   · Nol network call: semua data dari konstanta [JS-06]. Ini yang membuat
+     index.html tetap jalan penuh saat dibuka lewat file://.
+   · `reduced` dibaca sekali dan dipakai di [JS-09], [JS-10], [JS-13] supaya
+     animasi dan prefers-reduced-motion (lihat [CSS-13]) tidak bertengkar.
+   · gaya kode: var + function expression, tanpa arrow / template literal.
+     Bukan nostalgia — blok ini yang paling sering disentuh orang non-frontend
+     (ganti teks FAQ, tambah member), dan versi paling mudah dibaca cepat.
+   ========================================================================== */
+(function () {
+  'use strict';
+
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ------------------------------------------------------------------------
+     [JS-01] ★KRITIS · DOM HANDLES
+     Dideklarasikan PALING AWAL dengan sengaja: router::closeSheet() [JS-05]
+     sudah memakai `burger` dan `sheet`. Kalau blok ini digeser ke bawah,
+     render() saat boot melempar ReferenceError (temporal dead zone) dan
+     seluruh view jadi kosong — bukan pesan error yang jelas.
+     ---------------------------------------------------------------------- */
+  var views = {
+    home: document.getElementById('view-home'),
+    about: document.getElementById('view-about'),
+    faq: document.getElementById('view-faq'),
+    passport: document.getElementById('view-passport')
+  };
+  var burger = document.getElementById('burger');
+  var sheet = document.getElementById('sheet');
+  var navBits = {
+    links: document.querySelectorAll('.navlinks a[data-route]'),
+    contact: document.getElementById('navContact'),
+    passportPill: document.getElementById('navPassport'),
+    back: document.getElementById('navBack')
+  };
+  var TITLES = {
+    home: 'Pacific Nova — Collect Moments, Earn Nova',
+    about: 'About Pacific Nova',
+    faq: 'FAQ — Pacific Nova',
+    passport: 'My Nova Passport — Pacific Nova'
+  };
+
+  /* ------------------------------------------------------------------------
+     [JS-02] ◆PENTING · satu sumber angka breakpoint
+     760px harus sama dengan media query burger di [CSS-12]. Nilai ini dibaca
+     lewat matchMedia (bukan innerWidth) supaya tidak meleset ketika scrollbar
+     membuat lebar layout berbeda dari lebar jendela.
+     ---------------------------------------------------------------------- */
+  var MQ_NAV = window.matchMedia('(max-width: 760px)');
+
+  /* ------------------------------------------------------------------------
+     [JS-03] · hash router — format rute
+     #/                      -> home
+     #/about  #/faq  #/passport
+     #/about#contact         -> view about + scroll ke panel kontak
+     #/passport?member=0983  -> view passport + search otomatis
+     Hash asing (#babar) sengaja TIDAK melempar user ke home: parseHash
+     mengembalikan view:null dan render() menahan view berjalan.
+     ---------------------------------------------------------------------- */
+  function parseHash() {
+    var raw = (location.hash || '').replace(/^#\/?/, '');
+    var path = raw.split('?')[0];
+    var key = path.split('#')[0];
+    return {
+      view: views[key] ? key : (raw === '' ? 'home' : null),
+      anchor: path.indexOf('#') > -1 ? path.split('#').pop() : '',
+      query: new URLSearchParams(raw.indexOf('?') > -1 ? raw.split('?')[1] : '')
+    };
+  }
+
+  /* satu-satunya anchor lintas-view yang kita dukung; regex pagar memastikan
+     apa pun yang ditempel di URL tidak pernah jadi selector sembarangan.
+     CATATAN: kalau target berada dekat akhir dokumen, browser meng-clamp scroll
+     dan anchor mendarat serendah mungkin (bukan di 92px) — itu sah, jangan
+     "diperbaiki" dengan menambah padding kosong di bawah halaman. */
+  var ANCHORS = /^(contact)$/;
+  function goToAnchor(name) {
+    var target = document.getElementById(name);
+    if (!target) return;
+    /* ★ urutan penting: view harus tampil dulu, baru scroll. Membalik ini
+       membuat anchor "mendarat" di posisi view sebelumnya. */
+    setTimeout(function () {
+      target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+    }, 90);
+  }
+
+  /* ------------------------------------------------------------------------
+     [JS-04] ★KRITIS · render() — satu fungsi yang mengganti SEMUA state view
+     Yang terjadi tiap pindah view: toggle `hidden` (kontrak [CSS-04]),
+     body[data-view] (latar + nav), document.title, state nav, tutup sheet,
+     stop clock, lalu scroll. Semua di satu tempat supaya tidak ada state
+     setengah jalan (mis. nav "Contact Us" tersisa di halaman About).
+     ---------------------------------------------------------------------- */
+  var currentView = null;
+  var lastMember = null;
+
+  function closeSheet() {
+    sheet.classList.remove('is-open');
+    burger.setAttribute('aria-expanded', 'false');
+    burger.setAttribute('aria-label', 'Open menu');
+  }
+
+  function render() {
+    var r = parseHash();
+    var v = r.view || currentView || 'home';
+    var anchored = ANCHORS.test(r.anchor);
+    var changed = v !== currentView;
+
+    if (changed) {
+      currentView = v;
+      document.body.dataset.view = v;
+      for (var k in views) {
+        views[k].hidden = (k !== v);
+        views[k].classList.remove('is-active');
+      }
+      views[v].classList.add('is-active');
+      document.title = TITLES[v];
+      navBits.links.forEach(function (a) {
+        if (a.dataset.route === v) a.setAttribute('aria-current', 'page');
+        else a.removeAttribute('aria-current');
+      });
+      navBits.contact.hidden = (v === 'about');
+      navBits.passportPill.hidden = (v === 'passport' || v === 'home');
+      navBits.back.hidden = (v === 'home');
+      closeSheet();
+      /* ★ clock berhenti saat meninggalkan passport: tanpa ini setInterval
+         [JS-09] terus menulis tiap detik ke elemen tersembunyi selamanya. */
+      if (v !== 'passport') stopClock();
+      if (!anchored) window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
+    }
+    if (anchored) goToAnchor(r.anchor);
+
+    /* deep link bisa datang KAPAN saja (tombol back/forward browser), jadi
+       sinkronisasi member dilakukan di render, bukan hanya di boot. */
+    var want = r.query.get('member');
+    if (want && want !== lastMember) applyMember(want);
+  }
+
+  /* ------------------------------------------------------------------------
+     [JS-05] ◆PENTING · hamburger layar kecil
+     Tiga jalan keluar yang semuanya wajib ada: pilih tautan (render ->
+     closeSheet), tekan Esc, atau lebarkan jendela. `aria-expanded` +
+     pergantian `aria-label` menjaga pembaca layar tahu kondisi menu.
+     ---------------------------------------------------------------------- */
+  burger.addEventListener('click', function () {
+    var open = sheet.classList.toggle('is-open');
+    burger.setAttribute('aria-expanded', String(open));
+    burger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+    if (open) sheet.querySelector('a').focus();
+  });
+  document.addEventListener('click', function (e) {
+    if (!sheet.classList.contains('is-open')) return;
+    if (!sheet.contains(e.target) && !burger.contains(e.target)) closeSheet();
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeSheet(); });
+  MQ_NAV.addEventListener
+    ? MQ_NAV.addEventListener('change', function (e) { if (!e.matches) closeSheet(); })
+    : MQ_NAV.addListener(function (e) { if (!e.matches) closeSheet(); });
+
+  /* ------------------------------------------------------------------------
+     [JS-06] ★KRITIS · DATA MEMBER — satu-satunya tempat menukar data
+     Semua baris kartu (nama, tier, benefit, history, Total NAS, chip "n
+     activity") diturunkan dari objek ini. Total TIDAK ditulis tangan:
+     [JS-07] menjumlahkan history, supaya angka dan daftar tidak bisa bohong
+     satu sama lain.
+     Untuk API sungguhan: ganti isi MEMBERS dengan fetch, lalu panggil
+     applyMember(input.value) di .then(). Tidak ada bagian render yang perlu
+     disentuh — itu sebabnya bentuk objeknya dibiarkan selurus mungkin.
+     ---------------------------------------------------------------------- */
+  var JOSHUA = {
+    name: 'Joshua',
+    tier: 'Blue Nova',
+    benefits: [
+      { icon: 'i-ticket', label: 'Priority event registration', meta: 'Always open' },
+      { icon: 'i-spark',  label: '2 free Nova Activities', meta: 'Per month' },
+      { icon: 'i-gem',    label: 'Exclusive partner privileges', meta: 'Unlocked' }
+    ],
+    history: [
+      { label: 'NAS Event Attending',          amount: 50, icon: 'i-ticket', date: '2026-09-05' },
+      { label: 'Join Nova Activity',           amount: 10, icon: 'i-spark',  date: '2026-08-28' },
+      { label: 'Join Nova Activity',           amount: 10, icon: 'i-spark',  date: '2026-08-19' },
+      { label: 'Join Nova Activity',           amount: 10, icon: 'i-spark',  date: '2026-08-07' },
+      { label: 'Join Nova Activity',           amount: 10, icon: 'i-spark',  date: '2026-07-24' },
+      { label: 'Use Exclusive Nova Privilege', amount: 5,  icon: 'i-gem',    date: '2026-09-01' },
+      { label: 'Use Exclusive Nova Privilege', amount: 5,  icon: 'i-gem',    date: '2026-07-15' }
+    ]
+  };
+  /* kunci lookup = nomor yang sudah dinormalisasi [JS-07]: 0983 dan
+     NV-2026-004821 keduanya menunjuk record yang sama */
+  var MEMBERS = { '0983': JOSHUA, 'NV2026004821': JOSHUA };
+
+  var FAQS = [
+    { cat: 'nas', q: 'What exactly is a NAS point?', a: 'NAS is the unit Pacific Nova measures membership value in. One action, one fixed value — an attended event is +50, a Nova Activity is +10, using an exclusive privilege is +5. Points are not currency and cannot be bought.' },
+    { cat: 'nas', q: 'When does my balance update?', a: 'Attendance is reconciled when the organiser closes the guest list, usually within 24 hours. Your card shows the exact timestamp of the last update under “Total NAS”.' },
+    { cat: 'nas', q: 'Do NAS points expire?', a: 'No — points you earned never expire. But your tier is calculated on a rolling 12 months, so the tier you keep depends on staying active, not on hoarding.' },
+    { cat: 'tier', q: 'How do I move up a tier?', a: 'Cross the NAS threshold of the next tier within 12 months. The upgrade applies the moment the qualifying entry lands; there is nothing to claim.' },
+    { cat: 'tier', q: 'Can I lose my tier?', a: 'A review runs once a year on your membership anniversary. If you fall short you step down one tier — never more than one, and never mid-season.' },
+    { cat: 'privilege', q: 'What counts as an exclusive privilege?', a: 'Partner perks you unlock by tier: lounge access, room and seat upgrades, late checkout, and the concierge line. Using one records a +5 NAS activity line, like everything else.' },
+    { cat: 'privilege', q: 'Can I give a privilege to someone else?', a: 'Yes, from Gold Nova upward — you can transfer one privilege per quarter from the passport card. The activity still counts to your balance.' },
+    { cat: 'account', q: 'Where do I find my member number?', a: 'It is printed on your welcome card and in the passport email subject line. It looks like 0983 or NV-2026-004821, and punctuation does not matter when you search.' },
+    { cat: 'account', q: 'I joined an activity but it is missing — what now?', a: 'Give it 24 hours first. If the entry never arrives, reply to the activity confirmation email; member services can pull the guest list and post the NAS by hand.' },
+    { cat: 'account', q: 'Is my data shared with partners?', a: 'Only your member number and tier are shared when you redeem a privilege — never your full activity history or contact details.' }
+  ];
+  var CAT_LABEL = { nas: 'NAS points', tier: 'Tiers', privilege: 'Privileges', account: 'Account' };
+
+  /* ------------------------------------------------------------------------
+     [JS-07] ★KRITIS · normalisasi, pencarian, dan escaping
+     · normalize(): HURUF BESAR + buang semua yang bukan A-Z0-9. Sekaligus
+       pagar input: karakter markup tidak pernah bisa lolos ke lookup.
+     · esc(): dipakai setiap kali string disisipkan lewat innerHTML. Data demo
+       hari ini aman, tapi [JS-06] akan diganti API — tanpa esc(), satu label
+       dari server bisa jadi <img onerror>. Ini yang membuat swap ke API
+       sungguhan tidak membuka celah injeksi.
+     · SPRITE: id ikon dibaca dari <symbol> di [MK-01], bukan daftar kedua yang
+       bisa basi. Ikon tak dikenal jatuh ke i-check, bukan jadi kotak kosong.
+     ---------------------------------------------------------------------- */
+  var form = document.getElementById('searchForm');
+  var input = document.getElementById('memberInput');
+  var note = document.getElementById('note');
+  var hint = document.getElementById('hint');
+  var notfound = document.getElementById('notfound');
+  var card = document.getElementById('card');
+  var out = {
+    name: document.getElementById('mName'),
+    no: document.getElementById('mNo'),
+    tier: document.getElementById('mTier'),
+    total: document.getElementById('mTotal'),
+    upd: document.getElementById('mUpdated'),
+    list: document.getElementById('history'),
+    cnt: document.getElementById('hCount'),
+    ava: document.getElementById('avatar'),
+    nf: document.getElementById('nfQuery'),
+    benefits: document.getElementById('benefitList'),
+    bTier: document.getElementById('bTier')
+  };
+  var SPRITE = {};
+  Array.prototype.forEach.call(document.querySelectorAll('symbol[id]'), function (s) { SPRITE[s.id] = 1; });
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  var icon = function (name) { return SPRITE[name] ? name : 'i-check'; };
+  var normalize = function (v) { return (v || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); };
+  var findMember = function (v) { return MEMBERS[normalize(v)] || null; };
+  var totalNAS = function (m) { return m.history.reduce(function (s, h) { return s + h.amount; }, 0); };
+
+  /* ------------------------------------------------------------------------
+     [JS-08] ★KRITIS · formatter tanggal — dua zona, jangan ditukar
+     · tanggal history   : dibangun dari string ISO 'YYYY-MM-DD' dan diformat
+       dengan timeZone:UTC supaya "05 Sep" berarti 05 Sep di Jakarta maupun di
+       London (tanpa UTC, tanggal bisa bergeser mundur satu hari).
+     · stamp "baru diperbarui" : memakai ZONA LOKAL. Dulu keduanya berbagi satu
+       formatter UTC — bug nyata: user yang membuka halaman sebelum pukul
+       07:00 WIB melihat tanggal kemarin di samping jam hari ini.
+     ---------------------------------------------------------------------- */
+  var D_UTC = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
+  var D_LOCAL = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  var T_LOCAL = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+  var tidy = function (s) { return s.replace(/\./g, '').replace('Sept', 'Sep'); };
+  var prettyDate = function (iso) { return tidy(D_UTC.format(new Date(iso + 'T00:00:00Z'))); };
+  var nowStamp = function () {
+    var d = new Date();
+    return tidy(D_LOCAL.format(d)) + '  ·  ' + T_LOCAL.format(d);
+  };
+
+  /* ------------------------------------------------------------------------
+     [JS-09] ◆PENTING · angka berjalan + clock
+     countUp berhenti tepat di nilai target (bukan mendekati) supaya hasil
+     render sama dengan total yang dihitung [JS-07]. Clock di-stop dari
+     [JS-04] saat view pindah, dan startClock selalu membersihkan interval
+     lama lebih dulu — dua hal yang mencegah timer menumpuk bila user
+     mencari berkali-kali.
+     ---------------------------------------------------------------------- */
+  var clockId = null;
+  function stopClock() { if (clockId) { clearInterval(clockId); clockId = null; } }
+  function startClock() {
+    var tick = function () { out.upd.textContent = nowStamp(); };
+    tick();
+    stopClock();
+    clockId = setInterval(tick, 1000);
+  }
+  function countUp(el, target) {
+    if (reduced) { el.textContent = target; return; }
+    var dur = 850, t0 = performance.now();
+    (function step(now) {
+      var p = Math.min(1, (now - t0) / dur);
+      el.textContent = Math.round(target * (1 - Math.pow(1 - p, 3)));
+      if (p < 1) requestAnimationFrame(step);
+    })(t0);
+  }
+
+  /* ------------------------------------------------------------------------
+     [JS-10] · render isi kartu
+     innerHTML dipakai untuk kerangka baris (ico + label + chip) karena cepat
+     dan strukturnya tetap; SEMUA nilai dinamis dilewatkan esc() lebih dulu.
+     Urutan kelas di sini adalah kontrak dengan [CSS-11]: .h-date di dalam
+     .h-label, dan .amount di dalam .h-right.
+     CATATAN JEBAKAN: id #history juga nama properti bawaan (window.history).
+     Karena itu elemen ini selalu diambil lewat out.list, dan tidak ada satu
+     pun kode yang menulis `history` telanjang — di luar IIFE, nama itu
+     menunjuk riwayat browser, bukan daftar NAS.
+     ---------------------------------------------------------------------- */
+  function fillRows(history) {
+    out.list.innerHTML = '';
+    history.forEach(function (h, i) {
+      var li = document.createElement('li');
+      li.style.animationDelay = (0.06 * i + 0.12) + 's';
+      li.innerHTML =
+        '<span class="ico"><svg aria-hidden="true"><use href="#' + esc(icon(h.icon)) + '"/></svg></span>' +
+        '<span class="h-label">' + esc(h.label) +
+          '<span class="h-date">' + esc(prettyDate(h.date)) + ' · submitted</span></span>' +
+        '<span class="h-right"><span class="amount">+' + esc(h.amount) + ' NAS</span></span>';
+      out.list.appendChild(li);
+    });
+  }
+
+  function fillBenefits(list) {
+    out.benefits.innerHTML = '';
+    (list || []).forEach(function (b) {
+      var li = document.createElement('li');
+      li.innerHTML =
+        '<span class="b-ico"><svg aria-hidden="true"><use href="#' + esc(icon(b.icon)) + '"/></svg></span>' +
+        '<span>' + esc(b.label) + '</span>' +
+        (b.meta ? '<span class="b-meta">' + esc(b.meta) + '</span>' : '');
+      out.benefits.appendChild(li);
+    });
+  }
+
+  /* ------------------------------------------------------------------------
+     [JS-11] ★KRITIS · tiga keadaan kartu: ada hasil / tidak ketemu / reset
+     Pindah keadaan = mengubah 4 elemen (card, notfound, hint, note) SECARA
+     BARENGAN. Kalau salah satu terlupa, kartu lama tetap tertinggal di bawah
+     pesan "no record" — bug yang paling mudah masuk di view ini.
+     show() juga menyalakan clock [JS-09]; showNotFound()/reset() mematikan.
+     ---------------------------------------------------------------------- */
+  function show(member, value) {
+    var name = member.name || 'Nova Member';
+    out.name.textContent = name;
+    out.ava.textContent = name.trim().charAt(0).toUpperCase() || 'N';
+    out.no.textContent = value;
+    out.tier.textContent = member.tier;
+    out.bTier.textContent = member.tier;
+    out.cnt.textContent = member.history.length;
+    fillRows(member.history);
+    fillBenefits(member.benefits);
+    countUp(out.total, totalNAS(member));
+    startClock();
+    hint.hidden = true; notfound.hidden = true; note.hidden = true; card.hidden = false;
+    input.setAttribute('aria-invalid', 'false');
+    card.classList.remove('reveal'); void card.offsetWidth; card.classList.add('reveal');
+    if (!reduced) card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function showNotFound(value) {
+    card.hidden = true; hint.hidden = true; notfound.hidden = false;
+    out.nf.textContent = value;                 /* textContent, bukan innerHTML */
+    note.hidden = false;
+    note.textContent = 'No record for “' + value + '”.';
+    input.setAttribute('aria-invalid', 'true');
+    stopClock();
+  }
+
+  function reset() {
+    card.hidden = true; notfound.hidden = true; hint.hidden = false; note.hidden = true;
+    input.setAttribute('aria-invalid', 'false');
+    stopClock();
+  }
+
+  /* applyMember = satu jalur untuk search dari form DAN dari deep link ?member=
+     [JS-04] — dua-duanya harus menghasilkan keadaan yang identik. */
+  function applyMember(raw) {
+    var value = String(raw || '').trim();
+    if (!value) return false;
+    input.value = value;
+    form.classList.add('has-value');
+    var member = findMember(value);
+    if (member) show(member, value.toUpperCase()); else showNotFound(value.toUpperCase());
+    return true;
+  }
+
+  /* ------------------------------------------------------------------------
+     [JS-12] ◆PENTING · kejadian pada form
+     · submit kosong -> shake + fokus kembali ke input (dan #note diumumkan
+       karena role="status" [MK-08]).
+     · Escape di input -> kosongkan + reset, supaya kartu lama tidak tertinggal.
+     · menghapus teks sampai kosong -> reset(), bukan biarkan kartu menggantung.
+     ---------------------------------------------------------------------- */
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (!input.value.trim()) {
+      note.hidden = false;
+      note.textContent = 'Please enter your member number first.';
+      input.setAttribute('aria-invalid', 'true');   /* keadaan invalid juga harus terdengar, bukan hanya terlihat */
+      form.classList.remove('shake'); void form.offsetWidth; form.classList.add('shake');
+      input.focus();
+      return;
+    }
+    applyMember(input.value);
+  });
+  input.addEventListener('input', function () {
+    form.classList.toggle('has-value', input.value.length > 0);
+    if (!input.value.trim()) reset();
+    else if (!note.hidden) note.hidden = true;
+  });
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { input.value = ''; form.classList.remove('has-value'); reset(); input.blur(); }
+  });
+  document.getElementById('clearBtn').addEventListener('click', function () {
+    input.value = ''; form.classList.remove('has-value'); reset(); input.focus();
+  });
+
+  /* ------------------------------------------------------------------------
+     [JS-13] · FAQ: data [JS-06] -> <details>, plus search + chip kategori
+     Chip dan daftar berbagi satu state (faqCat) dan satu fungsi render, jadi
+     filter + pencarian selalu konsisten — tidak ada chip yang "lupa" menyaring.
+     ---------------------------------------------------------------------- */
+  var faqList = document.getElementById('faqList');
+  var faqEmpty = document.getElementById('faqEmpty');
+  var faqFilter = document.getElementById('faqFilter');
+  var chips = document.querySelectorAll('.chips button');
+  var faqCat = 'all';
+
+  function renderFaq() {
+    var q = (faqFilter.value || '').trim().toLowerCase();
+    var items = FAQS.filter(function (f) {
+      return (faqCat === 'all' || f.cat === faqCat) &&
+             (!q || (f.q + ' ' + f.a).toLowerCase().indexOf(q) > -1);
+    });
+    faqList.innerHTML = '';
+    items.forEach(function (f, i) {
+      var d = document.createElement('details');
+      d.className = 'qa panel';
+      d.innerHTML =
+        '<summary><span class="q-tag">' + esc(CAT_LABEL[f.cat] || f.cat) + '</span>' +
+        '<span class="q-text">' + esc(f.q) + '</span>' +
+        '<span class="q-plus" aria-hidden="true">+</span></summary>' +
+        '<div class="qa-body">' + esc(f.a) + '</div>';
+      d.style.animation = reduced ? '' : 'rowIn .4s cubic-bezier(.22,.8,.26,1) both';
+      d.style.animationDelay = (i * 0.035) + 's';
+      faqList.appendChild(d);
+    });
+    faqEmpty.hidden = items.length > 0;
+  }
+  faqFilter.addEventListener('input', renderFaq);
+  Array.prototype.forEach.call(chips, function (btn) {
+    btn.addEventListener('click', function () {
+      faqCat = btn.dataset.cat;
+      Array.prototype.forEach.call(chips, function (b) { b.setAttribute('aria-pressed', String(b === btn)); });
+      renderFaq();
+    });
+  });
+
+  /* ------------------------------------------------------------------------
+     [JS-14] ★KRITIS · self-check struktur lalu boot
+     Kalau ada yang mengedit markup dan menghapus/mengganti salah satu id yang
+     dibutuhkan, gagal di sini dengan satu baris peringatan yang menyebut id-
+     nya — bukan seluruh skrip mati senyap di baris pertama.
+     ---------------------------------------------------------------------- */
+  function boot() {
+    var REQUIRED = ['view-home', 'view-about', 'view-faq', 'view-passport', 'burger', 'sheet',
+                    'navContact', 'navPassport', 'navBack', 'searchForm', 'memberInput', 'note',
+                    'hint', 'notfound', 'card', 'mName', 'mNo', 'mTier', 'mTotal', 'mUpdated',
+                    'history', 'hCount', 'benefitList', 'bTier', 'avatar', 'nfQuery', 'clearBtn',
+                    'faqList', 'faqEmpty', 'faqFilter'];
+    var missing = REQUIRED.filter(function (id) { return !document.getElementById(id); });
+    if (missing.length) console.warn('[Pacific Nova] elemen hilang, beberapa interaksi mati: #' + missing.join(', #'));
+    if (!SPRITE['i-check']) console.warn('[Pacific Nova] sprite kehilangan symbol ikon');
+
+    window.addEventListener('hashchange', render);
+    renderFaq();
+    render();
+    var pre = new URLSearchParams((location.hash.split('?')[1] || '') || location.search).get('member');
+    if (pre) applyMember(pre);
+  }
+
+  boot();
+})();
+</script>
+</body>
+</html>

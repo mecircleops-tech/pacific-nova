@@ -1,0 +1,142 @@
+
+[S0] ★ SATU FILE, MANDIRI  (kontrak download)
+  PASS  0 request keluar file — tidak ada aset/path relatif yang bisa hilang
+  PASS  0 console error & 0 warning (self-check [JS-14] harus diam di produksi)
+  PASS  logo = data-URI dan benar-benar ter-load (naturalWidth 368)
+  PASS  hero = data-URI (tidak mungkin ada <img> rusak di hero)
+  PASS  tidak ada token placeholder build yang tertinggal di output
+  PASS  setiap src/href adalah data: atau # (nol path relatif)
+  PASS  tidak ada konten liar di atas .page (pageTop=0) dan home pas satu layar
+  PASS  tanpa JavaScript sekalipun hero tetap tampil (konten tidak hilang, halaman tidak putih)
+
+[S1] ★ ROUTER [JS-03/JS-04]  · 4 view, title, state nav, anchor
+  PASS  #/          view=home     · hanya 1 section tampil · document.title ikut
+  PASS  #/about     view=about    · hanya 1 section tampil · document.title ikut
+  PASS  #/faq       view=faq      · hanya 1 section tampil · document.title ikut
+  PASS  #/passport  view=passport · hanya 1 section tampil · document.title ikut
+  PASS  hash asing di tengah sesi tidak melempar user ke home (view bertahan)
+  PASS  load langsung dengan rute tak dikenal → home (bukan halaman kosong)
+  PASS  aria-current hanya di link aktif (tidak ada nilai "false" nyasar)
+  PASS  di About: Contact Us disembunyikan (sudah ada di halaman), Passport + Back tampil
+  PASS  di Home: pill Passport & Back disembunyikan (CTA hero sudah mewakili)
+  PASS  deep-link #/about#contact → panel kontak terlihat (clamp di scroll maksimum diterima)
+
+[S2] ★ MY NOVA PASSPORT  · search, 3 keadaan kartu, clock, deep link
+  PASS  keadaan awal: hanya hint — tidak ada kartu kosong, tidak ada pesan salah
+  PASS  submit kosong: pesan validasi + fokus kembali ke input + aria-invalid=true
+  PASS  lookup "0983" → Joshua · Blue Nova · 100 · 7 activity
+  PASS  lookup "nv-2026-004821" → Joshua · Blue Nova · 100 · 7 activity
+  PASS  lookup "NV 2026 004821" → Joshua · Blue Nova · 100 · 7 activity
+  PASS  Total NAS = jumlah isi history (100) — bukan angka yang ditulis tangan
+  PASS  7 baris history, tiap baris tanggal submit sendiri (unik 7/7)
+  PASS  urutan history sama dengan urutan data (event +50 paling atas)
+  PASS  My Benefit: judul + 3 baris + meta per baris
+  PASS  avatar = inisial nama (dihitung, bukan hardcode)
+  PASS  tidak ada barcode & tidak ada cap bundar (permintaan R3)
+  PASS  [JS-08] tanggal stamp = ZONA LOKAL (09 Sep 2026), bukan UTC (bug geser 1 hari)
+  PASS  jam stamp = jam lokal browser (menit boleh ±1 karena tick)
+  PASS  clock benar-benar berdetak tiap detik
+  PASS  ★ clock DIHENTIKAN saat pindah view — tidak ada interval liar seumur tab
+  PASS  search berkali-kali tidak menumpuk interval (jam tetap maju 1 langkah, bukan 2+)
+  PASS  deep link #/passport?member=0983 → kartu terisi tanpa satu klik pun
+  PASS  perubahan ?member= setelah load ikut disinkronkan (tombol back/forward)
+  PASS  deep link ke member tak dikenal → keadaan not-found, bukan kartu kosong
+  PASS  member tak dikenal → #notfound + #note, kartu disembunyikan
+  PASS  nomor yang diketik tampil apa adanya (upper-case) di panel not-found
+  PASS  tombol × membersihkan input, mengembalikan hint, dan mengembalikan fokus
+  PASS  Escape di input = reset penuh (kartu tidak tertinggal di bawah input kosong)
+  PASS  ★ payload markup di input tidak pernah jadi elemen (esc/textContent): <b>/<img> jadi teks
+  PASS  input tanpa karakter alfanumerik ditangani tanpa exception → not-found
+  PASS  search ulang setelah error: keadaan bersih (note/notfound hilang, kartu tampil)
+
+[S3] ◆ KONTEN  · About, FAQ, dan permintaan Round 5
+  PASS  About: 4 statistik · 3 langkah · 3 tier · panel #contact · band CTA
+  PASS  badge "Most members" hanya 1 dan tidak menimpa chip "600+ NAS"
+  PASS  tinggi ketiga kartu tier rata (grid sehat, bukan kartu menggantung)
+  PASS  nav persis "About Pacific Nova" | "FAQ", tanpa entri Nova Passport
+  PASS  chip kicker "MEMBER NAS BALANCE" & eyebrow "PACIFIC NOVA · MEMBERSHIP" hilang dari DOM
+  PASS  About tidak punya teks placeholder / lorem
+  PASS  FAQ terender dari data: 10 pertanyaan, tiap baris ber-tag kategori
+  PASS  chip kategori menyaring + aria-pressed pindah ke chip aktif
+  PASS  filter + search bekerja bersamaan (tier + "expire" → 0 hasil + empty-state)
+  PASS  search tetap hidup setelah chip kembali ke All
+  PASS  search dikosongkan → 10 item kembali, empty-state hilang
+  PASS  baris FAQ bisa dibuka (accordion native <details>)
+  PASS  isi FAQ lolos esc(): tidak ada tag bocor, semua jawaban panjang
+
+[S4] ◆ LAYOUT & BREAKPOINT  · 760px (nav/burger) dan 940px (kartu)
+  PASS   360×740  tanpa overflow · burger ON  · nav desktop OFF
+  PASS   390×844  tanpa overflow · burger ON  · nav desktop OFF
+  PASS   479×900  tanpa overflow · burger ON  · nav desktop OFF
+  PASS   480×900  tanpa overflow · burger ON  · nav desktop OFF
+  PASS   759×900  tanpa overflow · burger ON  · nav desktop OFF
+  PASS   760×900  tanpa overflow · burger ON  · nav desktop OFF
+  PASS   761×900  tanpa overflow · burger OFF · nav desktop ON 
+  PASS   900×700  tanpa overflow · burger OFF · nav desktop ON 
+  PASS   939×900  tanpa overflow · burger OFF · nav desktop ON 
+  PASS   940×900  tanpa overflow · burger OFF · nav desktop ON 
+  PASS   941×900  tanpa overflow · burger OFF · nav desktop ON 
+  PASS  1280×800  tanpa overflow · burger OFF · nav desktop ON 
+  PASS  1440×900  tanpa overflow · burger OFF · nav desktop ON 
+  PASS  1920×1080 tanpa overflow · burger OFF · nav desktop ON 
+  PASS  2560×1300 tanpa overflow · burger OFF · nav desktop ON 
+  PASS   360×740  #/about     render penuh, tanpa overflow horizontal
+  PASS   360×740  #/faq       render penuh, tanpa overflow horizontal
+  PASS   360×740  #/passport  render penuh, tanpa overflow horizontal
+  PASS   390×844  #/about     render penuh, tanpa overflow horizontal
+  PASS   390×844  #/faq       render penuh, tanpa overflow horizontal
+  PASS   390×844  #/passport  render penuh, tanpa overflow horizontal
+  PASS   768×1024 #/about     render penuh, tanpa overflow horizontal
+  PASS   768×1024 #/faq       render penuh, tanpa overflow horizontal
+  PASS   768×1024 #/passport  render penuh, tanpa overflow horizontal
+  PASS   940×900  #/about     render penuh, tanpa overflow horizontal
+  PASS   940×900  #/faq       render penuh, tanpa overflow horizontal
+  PASS   940×900  #/passport  render penuh, tanpa overflow horizontal
+  PASS  1440×900  #/about     render penuh, tanpa overflow horizontal
+  PASS  1440×900  #/faq       render penuh, tanpa overflow horizontal
+  PASS  1440×900  #/passport  render penuh, tanpa overflow horizontal
+  PASS  2560×1300 #/about     render penuh, tanpa overflow horizontal
+  PASS  2560×1300 #/faq       render penuh, tanpa overflow horizontal
+  PASS  2560×1300 #/passport  render penuh, tanpa overflow horizontal
+  PASS  kartu passport di 939px: 1 kolom (≤940px wajib 1 kolom)
+  PASS  kartu passport di 390px: 1 kolom (≤940px wajib 1 kolom)
+  PASS  kartu passport di desktop: 2 kolom (navy member + activity)
+  PASS  hero mobile: blok copy dikunci di tengah (gap atas ≈ bawah, selisih ≤35px)
+  PASS  hero desktop 1440: sama-sama terpusat (selisih ≤70px)
+  PASS  ultrawide 2560: lebar blok teks dibatasi (judul tidak memanjang jadi 1 baris)
+  PASS  layar pendek 640px: H1 mengecil, hero tetap muat tanpa scroll
+
+[S5] ◆ HAMBURGER [JS-05]  · layar kecil
+  PASS  saat load: sheet benar-benar display:none (bukan transparan yang menahan klik)
+  PASS  buka: aria-expanded=true, label → "Close menu", sheet flex, fokus pindah ke item pertama
+  PASS  menu memuat 4 tujuan (About · FAQ · Contact · Passport)
+  PASS  Esc menutup menu
+  PASS  klik di luar menutup menu
+  PASS  pilih About: view berpindah DAN sheet menutup otomatis
+  PASS  Contact di sheet = pindah view lalu scroll ke panel kontak
+  PASS  melebarkan jendela (≤760 → 1200) menutup sheet: tidak ada menu mobile menggantung
+  PASS  di 1200px tombol hamburger ikut hilang (nav desktop kembali utuh)
+
+[S6] ◆ AKSESIBILITAS & MOTION
+  PASS  landmark punya nama: <nav aria-label="Main">, sheet role=group
+  PASS  semua <button>/<input> punya nama aksesibel
+  PASS  semua <img> punya alt; seluruh svg dekoratif aria-hidden
+  PASS  pesan validasi = live region (role=status, aria-live=polite)
+  PASS  area hasil kartu = aria-live=polite (hasil search diumumkan)
+  PASS  input search terhubung ke pesannya lewat aria-describedby
+  PASS  tidak ada role redundant tertinggal di dalam <nav>
+  PASS  bahasa dokumen dideklarasikan (pembaca layar tidak salah pelafalan)
+  PASS  tepat satu <h1> per view (struktur heading tidak bercabang)
+  PASS  About: tiap bagian punya <h2> (outline dokumen berguna untuk screen reader)
+  PASS  FAQ: tiap baris accordion punya <summary> sebagai label (pengganti h2 di list)
+  PASS  urutan Tab wajar: brand → nav → aksi → form, tanpa jebakan fokus [brand → A → A → navContact → navBack → memberInput]
+  PASS  semua target Tab pertama punya ring fokus keyboard terlihat ['brand', 'burger', 'link-quiet', 'primary']
+  PASS  kontras teks navy-kartu ≥ 4.5:1 terhadap latar navy
+  PASS  prefers-reduced-motion: Total NAS langsung 100 (tanpa animasi hitung)
+  PASS  prefers-reduced-motion: animasi kartu mati & scroll-behavior jadi auto
+
+══════════════════════════════════════════════════════════════════════
+HASIL QA: 122/122 LULUS
+Semua kontrak aman: satu file mandiri, router, passport (data +
+keadaan + clock), konten About/FAQ, 15 breakpoint, menu mobile,
+aksesibilitas, dan reduced-motion.
