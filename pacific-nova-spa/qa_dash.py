@@ -13,6 +13,7 @@
 #  [QA-01] Cara pakai:
 #            python3 build.py --src src/dashboard.src.html --out dashboard.html
 #            python3 qa_dash.py          # lewat http://localhost:8001 + smoke file://
+#            python3 qa_dash.py --verbose   # sama, + rincian tiap asersi yang lolos
 #          Keluaran: daftar centang + "HASIL QA DASHBOARD: n/n LULUS". Exit 1 bila gagal.
 #
 #  [QA-02] Data seed yang diasumsikan suite ini (lihat [JS-06] di template):
@@ -39,11 +40,19 @@ TODAY = dt.date.today()
 RESULTS, FAILED = [], []
 
 
+VERBOSE = '--verbose' in sys.argv or '-v' in sys.argv
+
+
 def check(name, ok, note=''):
     RESULTS.append(name)
     if not ok:
         FAILED.append(f'{name}  {str(note)[:150]}')
         print(f'  ✗ {name}  {str(note)[:150]}')
+    elif VERBOSE:
+        # [QA-06] mode audit: cetak tiap asersi yang lolos supaya QA-DASH-RUN.txt
+        # bisa menyimpan jejak per-asesi seperti QA-RUN.txt (QA-STRUCTURE P1-2).
+        # Default tanpa flag: keluaran persis seperti sebelumnya (hanya gagal).
+        print(f'  ✓ {name}')
     return 1 if ok else 0
 
 
